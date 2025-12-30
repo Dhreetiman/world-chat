@@ -1,0 +1,60 @@
+// Prisma Schema for Open World Chat
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Guest User - Anonymous users with generated UUID
+model GuestUser {
+  id           String        @id @default(uuid())
+  guestId      String        @unique
+  username     String
+  avatarId     Int           @default(1) // References pre-stored avatar (1-10)
+  lastActiveAt DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  messages     Message[]
+  settings     UserSettings?
+
+  @@index([lastActiveAt])
+}
+
+// Message - Chat messages with reactions and replies
+model Message {
+  id               String    @id @default(uuid())
+  content          String?
+  imageUrl         String?
+  senderId         String
+  senderName       String
+  replyToMessageId String?
+  replyToMessage   Message?  @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies          Message[] @relation("MessageReplies")
+  reactions        Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  sender           GuestUser @relation(fields: [senderId], references: [guestId], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([senderId])
+  @@index([content])
+}
+
+// User Settings - Theme and notification preferences
+model UserSettings {
+  id            String    @id @default(uuid())
+  guestId       String    @unique
+  theme         String    @default("dark") // "dark" | "light"
+  notifications Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  guest         GuestUser @relation(fields: [guestId], references: [guestId], onDelete: Cascade)
+}
+
+// Room Metadata - Global chat room information
+model RoomMetadata {
+  id          String @id @default(uuid())
+  name        String @default("Global Chat Room")
+  description String @default("Join the conversation instantly. No login, no history tracking. Just pick a name and say hello to the world.")
+}
