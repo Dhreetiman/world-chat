@@ -14,6 +14,7 @@ model GuestUser {
   guestId      String        @unique
   username     String
   avatarId     Int           @default(1) // References pre-stored avatar (1-10)
+  userTitle    String        @default("common") // "common", "VIP", "Activist", "Warrior", "Pro Gamer" etc.
   lastActiveAt DateTime      @default(now())
   createdAt    DateTime      @default(now())
   messages     Message[]
