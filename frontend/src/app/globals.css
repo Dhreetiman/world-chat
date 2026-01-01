@@ -130,3 +130,147 @@ body {
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
+
+/* Emoji Picker Customization - Matching Reference Design */
+.EmojiPickerReact {
+  --epr-bg-color: #1a2836 !important;
+  --epr-category-label-bg-color: #1a2836 !important;
+  --epr-text-color: #92b7c9 !important;
+  --epr-hover-bg-color: #2a3f4f !important;
+  --epr-focus-bg-color: #2a3f4f !important;
+  --epr-search-input-bg-color: #243442 !important;
+  --epr-picker-border-color: #2a3f4f !important;
+  --epr-search-border-color: transparent !important;
+  --epr-category-icon-active-color: #13a4ec !important;
+  --epr-skin-tone-picker-menu-color: #1a2836 !important;
+  border-radius: 12px !important;
+  border: 1px solid #2a3f4f !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  overflow: hidden !important;
+}
+
+/* Category navigation tabs at the top */
+.EmojiPickerReact .epr-category-nav {
+  background: #1a2836 !important;
+  padding: 10px 8px !important;
+  gap: 4px !important;
+  border-bottom: 1px solid #2a3f4f !important;
+}
+
+.EmojiPickerReact .epr-category-nav button {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+}
+
+.EmojiPickerReact .epr-category-nav button:hover {
+  background: #2a3f4f !important;
+}
+
+.EmojiPickerReact .epr-category-nav button.epr-active {
+  background: #13a4ec !important;
+}
+
+.EmojiPickerReact .epr-category-nav button.epr-active svg {
+  fill: white !important;
+}
+
+/* Search container */
+.EmojiPickerReact .epr-header {
+  padding: 10px 12px !important;
+}
+
+.EmojiPickerReact .epr-search-container {
+  position: relative !important;
+}
+
+.EmojiPickerReact .epr-search-container input {
+  width: 100% !important;
+  border-radius: 20px !important;
+  border: none !important;
+  background: #243442 !important;
+  color: #e2e8f0 !important;
+  font-size: 13px !important;
+  padding: 10px 16px 10px 40px !important;
+}
+
+.EmojiPickerReact .epr-search-container input::placeholder {
+  color: #5e7a8a !important;
+}
+
+.EmojiPickerReact .epr-search-container input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  background: #2a3f4f !important;
+}
+
+/* Category labels */
+.EmojiPickerReact .epr-emoji-category-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  color: #5e7a8a !important;
+  padding: 12px 14px 8px !important;
+  background: #1a2836 !important;
+}
+
+/* Emoji grid */
+.EmojiPickerReact .epr-emoji-list {
+  padding: 0 6px !important;
+}
+
+.EmojiPickerReact button.epr-emoji {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+  font-size: 24px !important;
+  transition: transform 0.15s ease, background 0.15s ease !important;
+}
+
+.EmojiPickerReact button.epr-emoji:hover {
+  background: #2a3f4f !important;
+  transform: scale(1.15) !important;
+}
+
+/* Preview section at bottom */
+.EmojiPickerReact .epr-preview {
+  border-top: 1px solid #2a3f4f !important;
+  background: #1a2836 !important;
+  padding: 8px 12px !important;
+}
+
+.EmojiPickerReact .epr-preview .epr-preview-emoji-label {
+  color: #5e7a8a !important;
+  font-size: 11px !important;
+}
+
+/* Skin tone selector - show at bottom */
+.EmojiPickerReact .epr-skin-tones {
+  background: transparent !important;
+}
+
+.EmojiPickerReact .epr-skin-tones button {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Custom scrollbar */
+.EmojiPickerReact .epr-body::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.EmojiPickerReact .epr-body::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.EmojiPickerReact .epr-body::-webkit-scrollbar-thumb {
+  background: #2a3f4f !important;
+  border-radius: 2px !important;
+}
+
+.EmojiPickerReact .epr-body::-webkit-scrollbar-thumb:hover {
+  background: #375a6b !important;
+}
