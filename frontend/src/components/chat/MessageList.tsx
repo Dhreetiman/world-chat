@@ -12,10 +12,22 @@ export default function MessageList() {
     const isDark = settings.theme === 'dark';
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const lastMessageIdRef = useRef<string | null>(null);
+    const messageCountRef = useRef<number>(0);
 
-    // Auto-scroll to bottom when new messages arrive
+    // Auto-scroll to bottom ONLY when new messages are added (not on reaction updates)
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const currentLastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null;
+        const currentMessageCount = messages.length;
+
+        // Only scroll if a new message was added (count increased and last message ID changed)
+        if (currentMessageCount > messageCountRef.current && currentLastMessageId !== lastMessageIdRef.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Update refs for next comparison
+        lastMessageIdRef.current = currentLastMessageId;
+        messageCountRef.current = currentMessageCount;
     }, [messages]);
 
     // Group messages by date
@@ -70,8 +82,8 @@ export default function MessageList() {
                         onClick={loadMoreMessages}
                         disabled={isLoadingMessages}
                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${isDark
-                                ? 'bg-[#162032] border border-[#1e3a5f] text-slate-300 hover:bg-[#1e3a5f]'
-                                : 'bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200'
+                            ? 'bg-[#162032] border border-[#1e3a5f] text-slate-300 hover:bg-[#1e3a5f]'
+                            : 'bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200'
                             } disabled:opacity-50`}
                     >
                         {isLoadingMessages ? 'Loading...' : 'Load More'}
@@ -85,8 +97,8 @@ export default function MessageList() {
                     {/* Date separator */}
                     <div className="flex justify-center my-1">
                         <span className={`px-2 py-0.5 text-[9px] font-medium rounded-full ${isDark
-                                ? 'bg-[#162032]/50 text-slate-400 border border-[#1e3a5f]/50'
-                                : 'bg-slate-200/50 text-slate-500 border border-slate-200/50'
+                            ? 'bg-[#162032]/50 text-slate-400 border border-[#1e3a5f]/50'
+                            : 'bg-slate-200/50 text-slate-500 border border-slate-200/50'
                             }`}>
                             {formatDateLabel(group.date)}
                         </span>
