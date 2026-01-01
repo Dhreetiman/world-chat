@@ -113,7 +113,7 @@ export default function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                     <div className={`mt-8 p-4 rounded-xl ${isDark ? 'bg-[#162032]/50' : 'bg-slate-50'
                         }`}>
                         <p className={`text-xs text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            Open World Chat v1.0.0<br />
+                            Openwave v1.0.0<br />
                             Messages are automatically deleted after 24 hours
                         </p>
                     </div>

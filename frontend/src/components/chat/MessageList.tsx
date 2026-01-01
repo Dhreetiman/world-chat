@@ -7,7 +7,7 @@ import MessageBubble from './MessageBubble';
 import dayjs from 'dayjs';
 
 export default function MessageList() {
-    const { messages, isLoadingMessages, hasMoreMessages, loadMoreMessages } = useChat();
+    const { messages, isLoadingMessages, hasMoreMessages, loadMoreMessages, searchQuery } = useChat();
     const { settings } = useUser();
     const isDark = settings.theme === 'dark';
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,12 @@ export default function MessageList() {
     const groupedMessages: { date: string; messages: typeof messages }[] = [];
     let currentDate = '';
 
-    messages.forEach((msg) => {
+    const filteredMessages = messages.filter(msg => {
+        if (!searchQuery) return true;
+        return msg.content?.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
+    filteredMessages.forEach((msg) => {
         const msgDate = dayjs(msg.createdAt).format('YYYY-MM-DD');
         if (msgDate !== currentDate) {
             currentDate = msgDate;

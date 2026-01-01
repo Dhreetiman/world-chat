@@ -24,6 +24,8 @@ interface ChatContextType {
     loadMoreMessages: () => void;
     setAvatars: (avatars: Avatar[]) => void;
     getAvatarUrl: (avatarId: number) => string | undefined;
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -37,6 +39,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [avatars, setAvatars] = useState<Avatar[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const addMessage = useCallback((message: Message) => {
         setMessages(prev => [...prev, message]);
@@ -82,6 +85,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 loadMoreMessages,
                 setAvatars,
                 getAvatarUrl,
+                searchQuery,
+                setSearchQuery,
             }}
         >
             {children}

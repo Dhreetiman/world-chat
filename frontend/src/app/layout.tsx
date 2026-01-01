@@ -15,11 +15,11 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Open World Chat - Global Chat Room",
+  title: "Openwave - Global Chat Room",
   description: "Join the conversation instantly. No login, no history tracking. Just pick a name and say hello to the world.",
   keywords: ["chat", "global", "anonymous", "real-time", "websocket"],
   openGraph: {
-    title: "Open World Chat",
+    title: "Openwave",
     description: "Join the conversation instantly. No login required.",
     type: "website",
   },

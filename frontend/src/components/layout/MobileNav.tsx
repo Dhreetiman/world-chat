@@ -48,8 +48,7 @@ export default function MobileNav({ isOpen, onClose, onSettingsClick }: MobileNa
                         <div className="flex flex-col">
                             <h1 className={`text-xl font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'
                                 }`}>
-                                Open World<br />
-                                <span className="text-[#13a4ec]">Chat</span>
+                                Open<span className="text-[#13a4ec]">wave</span>
                             </h1>
                         </div>
                     </div>

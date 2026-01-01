@@ -14,13 +14,13 @@ export default function Sidebar({ onSettingsClick }: SidebarProps) {
 
     return (
         <aside className={`hidden md:flex w-80 flex-col border-r shrink-0 relative overflow-hidden z-10 ${isDark
-                ? 'border-[#1e3a5f] bg-[#0f1a2b]'
-                : 'border-slate-200 bg-white shadow-sm'
+            ? 'border-[#1e3a5f] bg-[#0f1a2b]'
+            : 'border-slate-200 bg-white shadow-sm'
             }`}>
             {/* Gradient overlay */}
             <div className={`absolute top-0 left-0 w-full h-96 pointer-events-none ${isDark
-                    ? 'bg-gradient-to-b from-[#13a4ec]/10 to-transparent'
-                    : 'bg-gradient-to-b from-[#13a4ec]/5 to-transparent'
+                ? 'bg-gradient-to-b from-[#13a4ec]/10 to-transparent'
+                : 'bg-gradient-to-b from-[#13a4ec]/5 to-transparent'
                 }`} />
 
             <div className="flex flex-col h-full relative z-10 p-6 gap-8">
@@ -33,16 +33,15 @@ export default function Sidebar({ onSettingsClick }: SidebarProps) {
                         <div className="flex flex-col">
                             <h1 className={`text-xl font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'
                                 }`}>
-                                Open World<br />
-                                <span className="text-[#13a4ec]">Chat</span>
+                                Open<span className="text-[#13a4ec]">wave</span>
                             </h1>
                         </div>
                     </div>
 
                     {/* Online Count */}
                     <div className={`rounded-xl p-4 flex items-center justify-between ${isDark
-                            ? 'bg-[#162032] border border-[#1e3a5f]'
-                            : 'bg-white border border-slate-100 shadow-sm ring-1 ring-slate-900/5'
+                        ? 'bg-[#162032] border border-[#1e3a5f]'
+                        : 'bg-white border border-slate-100 shadow-sm ring-1 ring-slate-900/5'
                         }`}>
                         <div className="flex flex-col">
                             <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'
@@ -70,8 +69,8 @@ export default function Sidebar({ onSettingsClick }: SidebarProps) {
                     </button>
 
                     <button className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors group ${isDark
-                            ? 'text-slate-400 hover:bg-[#162032] hover:text-white'
-                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                        ? 'text-slate-400 hover:bg-[#162032] hover:text-white'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                         }`}>
                         <span className="material-symbols-outlined group-hover:scale-110 transition-transform">group</span>
                         <span className="text-sm font-medium">Friends</span>
@@ -82,8 +81,8 @@ export default function Sidebar({ onSettingsClick }: SidebarProps) {
                     <button
                         onClick={onSettingsClick}
                         className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors group ${isDark
-                                ? 'text-slate-400 hover:bg-[#162032] hover:text-white'
-                                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                            ? 'text-slate-400 hover:bg-[#162032] hover:text-white'
+                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                             }`}
                     >
                         <span className="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
@@ -94,12 +93,12 @@ export default function Sidebar({ onSettingsClick }: SidebarProps) {
                 {/* About Section */}
                 <div className="mt-auto">
                     <div className={`rounded-2xl p-5 relative overflow-hidden group ${isDark
-                            ? 'bg-[#162032] border border-[#1e3a5f]'
-                            : 'bg-gradient-to-br from-slate-50 to-white border border-slate-200 shadow-sm'
+                        ? 'bg-[#162032] border border-[#1e3a5f]'
+                        : 'bg-gradient-to-br from-slate-50 to-white border border-slate-200 shadow-sm'
                         }`}>
                         <div className={`absolute -right-6 -top-6 size-24 rounded-full blur-2xl transition-colors ${isDark
-                                ? 'bg-[#13a4ec]/10 group-hover:bg-[#13a4ec]/20'
-                                : 'bg-[#13a4ec]/10 group-hover:bg-[#13a4ec]/20'
+                            ? 'bg-[#13a4ec]/10 group-hover:bg-[#13a4ec]/20'
+                            : 'bg-[#13a4ec]/10 group-hover:bg-[#13a4ec]/20'
                             }`} />
                         <div className={`flex items-center gap-2 mb-2 font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'
                             }`}>

@@ -31,7 +31,8 @@ function ChatApp() {
     setIsLoadingMessages,
     setHasMoreMessages,
     currentPage,
-    setAvatars: setChatAvatars
+    setAvatars: setChatAvatars,
+    setSearchQuery
   } = useChat();
   const { joinChat, setUsername, isConnected } = useSocket();
 
@@ -173,6 +174,7 @@ function ChatApp() {
         <main className="flex-1 flex flex-col relative h-full">
           <ChatHeader
             onMenuClick={() => setMobileNavOpen(true)}
+            onSearchChange={setSearchQuery}
           />
 
           <MessageList />
