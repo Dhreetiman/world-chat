@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Message, RoomInfo } from '@/types';
+import { Message, RoomInfo, Avatar } from '@/types';
 
 interface ChatContextType {
     messages: Message[];
@@ -11,6 +11,7 @@ interface ChatContextType {
     isLoadingMessages: boolean;
     hasMoreMessages: boolean;
     currentPage: number;
+    avatars: Avatar[];
     setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
     addMessage: (message: Message) => void;
     updateMessageReactions: (messageId: string, reactions: Record<string, string[]>) => void;
@@ -21,6 +22,8 @@ interface ChatContextType {
     setHasMoreMessages: (hasMore: boolean) => void;
     setCurrentPage: (page: number) => void;
     loadMoreMessages: () => void;
+    setAvatars: (avatars: Avatar[]) => void;
+    getAvatarUrl: (avatarId: number) => string | undefined;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -33,6 +36,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [avatars, setAvatars] = useState<Avatar[]>([]);
 
     const addMessage = useCallback((message: Message) => {
         setMessages(prev => [...prev, message]);
@@ -50,6 +54,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setCurrentPage(prev => prev + 1);
     }, []);
 
+    const getAvatarUrl = useCallback((avatarId: number) => {
+        const avatar = avatars.find(a => a.id === avatarId);
+        return avatar?.url;
+    }, [avatars]);
+
     return (
         <ChatContext.Provider
             value={{
@@ -60,6 +69,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 isLoadingMessages,
                 hasMoreMessages,
                 currentPage,
+                avatars,
                 setMessages,
                 addMessage,
                 updateMessageReactions,
@@ -70,6 +80,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 setHasMoreMessages,
                 setCurrentPage,
                 loadMoreMessages,
+                setAvatars,
+                getAvatarUrl,
             }}
         >
             {children}

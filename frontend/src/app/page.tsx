@@ -30,7 +30,8 @@ function ChatApp() {
     setOnlineCount,
     setIsLoadingMessages,
     setHasMoreMessages,
-    currentPage
+    currentPage,
+    setAvatars: setChatAvatars
   } = useChat();
   const { joinChat, setUsername, isConnected } = useSocket();
 
@@ -43,22 +44,25 @@ function ChatApp() {
         const response = await userApi.getAvatars();
         if (response.data) {
           setAvatars(response.data);
+          setChatAvatars(response.data);
         }
       } catch (error) {
         console.error('Failed to load avatars:', error);
         // Fallback avatars
-        setAvatars([
+        const fallbackAvatars = [
           { id: 1, name: 'Avatar 1', url: '' },
           { id: 2, name: 'Avatar 2', url: '' },
           { id: 3, name: 'Avatar 3', url: '' },
           { id: 4, name: 'Avatar 4', url: '' },
           { id: 5, name: 'Avatar 5', url: '' },
           { id: 6, name: 'Avatar 6', url: '' },
-        ]);
+        ];
+        setAvatars(fallbackAvatars);
+        setChatAvatars(fallbackAvatars);
       }
     };
     loadAvatars();
-  }, []);
+  }, [setChatAvatars]);
 
   // Load initial messages
   const loadMessages = useCallback(async (page = 1) => {
@@ -66,13 +70,20 @@ function ChatApp() {
     try {
       const response = await messagesApi.getMessages(page, 50);
       if (response.data) {
+        // Transform messages to flatten sender.avatarId to avatarId
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const transformedMessages = response.data.map((msg: any) => ({
+          ...msg,
+          avatarId: msg.sender?.avatarId ?? msg.avatarId ?? 1,
+        }));
+
         // Backend returns messages in ascending order (oldest first)
         // For page 1: just set the messages
         // For page > 1: prepend older messages to the beginning
         if (page === 1) {
-          setMessages(response.data);
+          setMessages(transformedMessages);
         } else {
-          setMessages((prev: Message[]) => [...response.data, ...prev]);
+          setMessages((prev: Message[]) => [...transformedMessages, ...prev]);
         }
         setHasMoreMessages(response.pagination.page < response.pagination.totalPages);
       }

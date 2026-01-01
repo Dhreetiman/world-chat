@@ -35,12 +35,16 @@ const quickEmojis = ['👍', '✌️', '😎'];
 export default function MessageBubble({ message, showHeader = true }: MessageBubbleProps) {
     const { user, settings } = useUser();
     const { sendReaction } = useSocket();
-    const { setReplyingTo } = useChat();
+    const { setReplyingTo, getAvatarUrl } = useChat();
     const [showReactionPicker, setShowReactionPicker] = useState(false);
 
     const isDark = settings.theme === 'dark';
     const isOwnMessage = user?.guestId === message.senderId;
     const isSystemMessage = message.senderId === 'system';
+
+    // Get avatar URL for this message's sender
+    const senderAvatarUrl = getAvatarUrl(message.avatarId);
+    const ownAvatarUrl = user?.avatarId ? getAvatarUrl(user.avatarId) : undefined;
 
     const handleReaction = (emoji: string) => {
         sendReaction({ messageId: message.id, emoji });
@@ -277,8 +281,17 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
                 </div>
 
                 {showHeader ? (
-                    <div className="size-9 rounded-full bg-gradient-to-tr from-[#13a4ec] to-cyan-400 shrink-0 flex items-center justify-center text-white font-bold text-xs ml-2">
-                        ME
+                    <div className="size-9 rounded-full shrink-0 overflow-hidden ml-2 border-2 border-[#13a4ec]/30">
+                        {ownAvatarUrl ? (
+                            <div
+                                className="w-full h-full bg-cover bg-center"
+                                style={{ backgroundImage: `url(${ownAvatarUrl})` }}
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-tr from-[#13a4ec] to-cyan-400 flex items-center justify-center text-white font-bold text-xs">
+                                ME
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="w-9 shrink-0 ml-2" />
@@ -293,8 +306,17 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
     return (
         <div id={`message-${message.id}`} className="flex items-start py-0.5 group pr-12 transition-all duration-300 rounded-lg">
             {showHeader ? (
-                <div className={`size-9 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-xs bg-gradient-to-br ${avatarColors[avatarColorIndex]} mr-2`}>
-                    {message.senderName.charAt(0).toUpperCase()}
+                <div className={`size-9 rounded-full shrink-0 overflow-hidden mr-2 border-2 ${isDark ? 'border-[#233c48]' : 'border-slate-200'}`}>
+                    {senderAvatarUrl ? (
+                        <div
+                            className="w-full h-full bg-cover bg-center"
+                            style={{ backgroundImage: `url(${senderAvatarUrl})` }}
+                        />
+                    ) : (
+                        <div className={`w-full h-full bg-gradient-to-br ${avatarColors[avatarColorIndex]} flex items-center justify-center text-white font-bold text-xs`}>
+                            {message.senderName.charAt(0).toUpperCase()}
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="w-9 shrink-0 mr-2" />

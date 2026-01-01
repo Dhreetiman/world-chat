@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../middlewares/errorHandler';
 import * as userService from './user.service';
+import * as avatarService from '../avatars/avatar.service';
 import { generateGuestId } from '../../utils/uuid';
-import { getAllAvatars } from '../../utils/avatar';
 
 /**
  * Register/Get guest user
@@ -97,10 +97,10 @@ export const updateUsername = asyncHandler(async (req: Request, res: Response) =
 });
 
 /**
- * Get available avatars
+ * Get available avatars from database
  */
 export const getAvatars = asyncHandler(async (_req: Request, res: Response) => {
-    const avatars = getAllAvatars();
+    const avatars = await avatarService.getAllAvatars();
 
     res.status(200).json({
         success: true,

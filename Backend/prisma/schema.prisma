@@ -59,3 +59,11 @@ model RoomMetadata {
   name        String @default("Global Chat Room")
   description String @default("Join the conversation instantly. No login, no history tracking. Just pick a name and say hello to the world.")
 }
+
+// Avatar - Pre-stored avatar images
+model Avatar {
+  id        Int      @id @default(autoincrement())
+  name      String
+  url       String
+  createdAt DateTime @default(now())
+}
