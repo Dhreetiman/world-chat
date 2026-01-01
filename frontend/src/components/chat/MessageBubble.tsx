@@ -51,6 +51,21 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
         setReplyingTo(message);
     };
 
+    // Scroll to and highlight the original message when reply preview is clicked
+    const scrollToReply = () => {
+        if (message.replyToMessage?.id) {
+            const targetMessage = document.getElementById(`message-${message.replyToMessage.id}`);
+            if (targetMessage) {
+                targetMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Add highlight effect
+                targetMessage.classList.add('ring-2', 'ring-[#13a4ec]', 'ring-opacity-50');
+                setTimeout(() => {
+                    targetMessage.classList.remove('ring-2', 'ring-[#13a4ec]', 'ring-opacity-50');
+                }, 2000);
+            }
+        }
+    };
+
     const reactionCounts = Object.entries(message.reactions || {}).map(([emoji, users]) => ({
         emoji,
         count: users.length,
@@ -158,19 +173,12 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
     // Sender (own) messages - right aligned
     if (isOwnMessage) {
         return (
-            <div className="flex items-start py-0.5 group pl-12">
+            <div id={`message-${message.id}`} className="flex items-start py-0.5 group pl-12 transition-all duration-300 rounded-lg">
                 <div className="flex-1" />
 
                 <div className="flex flex-col items-end">
                     {showHeader && (
                         <span className={`text-sm font-bold mb-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>You</span>
-                    )}
-
-                    {message.replyToMessage && (
-                        <div className={`text-[11px] px-2.5 py-1 rounded-lg mb-1 max-w-full truncate ${isDark ? 'bg-[#13a4ec]/20 text-slate-300' : 'bg-[#13a4ec]/10 text-slate-600'
-                            }`}>
-                            ↩ {message.replyToMessage.senderName}: {message.replyToMessage.content?.slice(0, 30)}...
-                        </div>
                     )}
 
                     <div className="flex items-center gap-2">
@@ -229,7 +237,14 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
 
                         {/* Message bubble with reactions underneath */}
                         <div className="flex flex-col items-end">
-                            <div className="bg-[#13a4ec] text-white rounded-xl rounded-tr-sm px-4 py-2 text-sm leading-relaxed">
+                            <div className="bg-[#13a4ec] text-white rounded-2xl rounded-tr-none px-4 py-3 text-sm leading-relaxed shadow-lg shadow-[#13a4ec]/20">
+                                {/* Reply quote - simple and clean */}
+                                {message.replyToMessage && (
+                                    <div onClick={scrollToReply} className="text-xs mb-2 pb-2 border-b border-white/20 cursor-pointer hover:opacity-80 transition-opacity">
+                                        <span className="font-semibold text-white">↩ {message.replyToMessage.senderName}</span>
+                                        <span className="text-white/70"> · {message.replyToMessage.content?.slice(0, 35)}...</span>
+                                    </div>
+                                )}
                                 {message.content}
                             </div>
                             {/* Reactions - aligned with message bubble */}
@@ -276,7 +291,7 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
     const avatarColorIndex = message.avatarId % avatarColors.length;
 
     return (
-        <div className="flex items-start py-0.5 group pr-12">
+        <div id={`message-${message.id}`} className="flex items-start py-0.5 group pr-12 transition-all duration-300 rounded-lg">
             {showHeader ? (
                 <div className={`size-9 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-xs bg-gradient-to-br ${avatarColors[avatarColorIndex]} mr-2`}>
                     {message.senderName.charAt(0).toUpperCase()}
@@ -301,19 +316,21 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
                     </div>
                 )}
 
-                {message.replyToMessage && (
-                    <div className={`text-[11px] px-2.5 py-1 rounded-lg mb-1 max-w-full truncate ${isDark ? 'bg-[#162032] text-slate-400' : 'bg-slate-100 text-slate-500'
-                        }`}>
-                        ↩ {message.replyToMessage.senderName}: {message.replyToMessage.content?.slice(0, 30)}...
-                    </div>
-                )}
-
-                <div className="flex items-center gap-2 relative">
-                    <span className={`text-[10px] shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className="flex items-start gap-2 relative">
+                    <span className={`text-[10px] shrink-0 pt-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {timeStr}
                     </span>
-                    <div className={`rounded-xl rounded-tl-sm px-4 py-2 text-sm leading-relaxed ${isDark ? 'bg-[#1a2836] text-slate-200' : 'bg-white border border-slate-200 text-slate-800'
+                    <div className={`rounded-2xl rounded-tl-none px-4 py-3 text-sm leading-relaxed ${isDark ? 'bg-[#233c48] text-white' : 'bg-white border border-slate-200 text-slate-800'
                         }`}>
+                        {/* Reply quote - simple and clean */}
+                        {message.replyToMessage && (
+                            <div onClick={scrollToReply} className={`text-xs mb-2 pb-2 border-b cursor-pointer hover:opacity-80 transition-opacity ${isDark ? 'border-[#375a6b] text-[#92b7c9]' : 'border-slate-200 text-slate-500'}`}>
+                                <span className={`font-semibold ${isDark ? 'text-[#13a4ec]' : 'text-indigo-500'}`}>
+                                    ↩ {message.replyToMessage.senderName}
+                                </span>
+                                <span className="opacity-70"> · {message.replyToMessage.content?.slice(0, 35)}...</span>
+                            </div>
+                        )}
                         {message.content}
                     </div>
 
