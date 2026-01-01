@@ -30,21 +30,21 @@ const avatarColors = [
     'from-teal-400 to-teal-600',
 ];
 
+const quickEmojis = ['👍', '✌️', '😎'];
+
 export default function MessageBubble({ message, showHeader = true }: MessageBubbleProps) {
     const { user, settings } = useUser();
     const { sendReaction } = useSocket();
     const { setReplyingTo } = useChat();
-    const [showReactions, setShowReactions] = useState(false);
+    const [showReactionPicker, setShowReactionPicker] = useState(false);
 
     const isDark = settings.theme === 'dark';
     const isOwnMessage = user?.guestId === message.senderId;
     const isSystemMessage = message.senderId === 'system';
 
-    const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
-
     const handleReaction = (emoji: string) => {
         sendReaction({ messageId: message.id, emoji });
-        setShowReactions(false);
+        setShowReactionPicker(false);
     };
 
     const handleReply = () => {
@@ -70,20 +70,102 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
         );
     }
 
-    // Sender (own) messages - right aligned, mirrored layout
+    // Floating action toolbar component - compact version
+    const ActionToolbar = ({ isOwn = false }: { isOwn?: boolean }) => (
+        <div className={`absolute ${isOwn
+            ? 'bottom-full right-0 mb-2'
+            : 'left-full top-0 ml-2'
+            } opacity-0 group-hover:opacity-100 transition-all z-20`}>
+            <div className={`flex items-center gap-0 rounded-lg px-1 py-0.5 shadow-lg ${isDark ? 'bg-[#1a2836] border border-[#233c48]' : 'bg-white border border-slate-200 shadow-md'
+                }`}>
+                {/* Quick emoji reactions */}
+                {quickEmojis.map(emoji => (
+                    <button
+                        key={emoji}
+                        onClick={() => handleReaction(emoji)}
+                        className={`size-7 flex items-center justify-center rounded text-base hover:scale-110 transition-transform outline-none ${isDark ? 'hover:bg-[#233c48]' : 'hover:bg-slate-100'
+                            }`}
+                    >
+                        {emoji}
+                    </button>
+                ))}
+
+                {/* Add reaction button */}
+                <div className="relative">
+                    <button
+                        onClick={() => setShowReactionPicker(!showReactionPicker)}
+                        className={`size-7 flex items-center justify-center rounded transition-colors outline-none ${isDark ? 'text-slate-400 hover:bg-[#233c48] hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                            }`}
+                        title="Add reaction"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                            <line x1="9" y1="9" x2="9.01" y2="9" />
+                            <line x1="15" y1="9" x2="15.01" y2="9" />
+                            <line x1="12" y1="17" x2="12" y2="20" />
+                            <line x1="10.5" y1="18.5" x2="13.5" y2="18.5" />
+                        </svg>
+                    </button>
+
+                    {showReactionPicker && (
+                        <div className={`absolute bottom-full mb-2 ${isOwn ? 'right-0' : 'left-0'} z-30`}>
+                            <div className={`flex gap-1 p-1.5 rounded-lg shadow-xl ${isDark ? 'bg-[#1a2836] border border-[#233c48]' : 'bg-white border border-slate-200'
+                                }`}>
+                                {['👍', '❤️', '😂', '😮', '😢', '🔥', '👏', '🎉'].map(emoji => (
+                                    <button
+                                        key={emoji}
+                                        onClick={() => handleReaction(emoji)}
+                                        className="size-7 flex items-center justify-center rounded text-lg hover:scale-110 hover:bg-[#233c48] transition-all outline-none"
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Reply button - simple arrow */}
+                <button
+                    onClick={handleReply}
+                    className={`size-7 flex items-center justify-center rounded transition-colors outline-none ${isDark ? 'text-slate-400 hover:bg-[#233c48] hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                    title="Reply"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 14l-5-5 5-5" />
+                        <path d="M4 9h11a4 4 0 0 1 0 8h-1" />
+                    </svg>
+                </button>
+
+                {/* More options - vertical dots */}
+                <button
+                    className={`size-7 flex items-center justify-center rounded transition-colors outline-none ${isDark ? 'text-slate-400 hover:bg-[#233c48] hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                    title="More"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="2" />
+                        <circle cx="12" cy="12" r="2" />
+                        <circle cx="12" cy="19" r="2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+
+    // Sender (own) messages - right aligned
     if (isOwnMessage) {
         return (
             <div className="flex items-start py-0.5 group pl-12">
-                {/* Spacer to push content right */}
                 <div className="flex-1" />
 
                 <div className="flex flex-col items-end">
-                    {/* Header: Name */}
                     {showHeader && (
                         <span className={`text-sm font-bold mb-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>You</span>
                     )}
 
-                    {/* Reply preview */}
                     {message.replyToMessage && (
                         <div className={`text-[11px] px-2.5 py-1 rounded-lg mb-1 max-w-full truncate ${isDark ? 'bg-[#13a4ec]/20 text-slate-300' : 'bg-[#13a4ec]/10 text-slate-600'
                             }`}>
@@ -91,18 +173,94 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
                         </div>
                     )}
 
-                    {/* Message row: Bubble + Time (time on right for sender) */}
-                    <div className="flex items-start gap-2">
-                        <div className="bg-[#13a4ec] text-white rounded-xl rounded-tr-sm px-4 py-2 text-sm leading-relaxed">
-                            {message.content}
+                    <div className="flex items-center gap-2">
+                        {/* Action toolbar - compact version for own messages */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-all">
+                            <div className={`flex items-center gap-0 rounded-lg px-1 py-0.5 shadow-lg ${isDark ? 'bg-[#1a2836] border border-[#233c48]' : 'bg-white border border-slate-200 shadow-md'
+                                }`}>
+                                {quickEmojis.map(emoji => (
+                                    <button
+                                        key={emoji}
+                                        onClick={() => handleReaction(emoji)}
+                                        className={`size-7 flex items-center justify-center rounded text-base hover:scale-110 transition-transform outline-none ${isDark ? 'hover:bg-[#233c48]' : 'hover:bg-slate-100'
+                                            }`}
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setShowReactionPicker(!showReactionPicker)}
+                                    className={`size-7 flex items-center justify-center rounded transition-colors outline-none ${isDark ? 'text-slate-400 hover:bg-[#233c48] hover:text-white' : 'text-slate-500 hover:bg-slate-100'
+                                        }`}
+                                    title="Add reaction"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                                        <line x1="9" y1="9" x2="9.01" y2="9" />
+                                        <line x1="15" y1="9" x2="15.01" y2="9" />
+                                        <line x1="12" y1="17" x2="12" y2="20" />
+                                        <line x1="10.5" y1="18.5" x2="13.5" y2="18.5" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={handleReply}
+                                    className={`size-7 flex items-center justify-center rounded transition-colors outline-none ${isDark ? 'text-slate-400 hover:bg-[#233c48] hover:text-white' : 'text-slate-500 hover:bg-slate-100'
+                                        }`}
+                                    title="Reply"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M9 14l-5-5 5-5" />
+                                        <path d="M4 9h11a4 4 0 0 1 0 8h-1" />
+                                    </svg>
+                                </button>
+                                <button
+                                    className={`size-7 flex items-center justify-center rounded transition-colors outline-none ${isDark ? 'text-slate-400 hover:bg-[#233c48] hover:text-white' : 'text-slate-500 hover:bg-slate-100'
+                                        }`}
+                                    title="More"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="12" cy="5" r="2" />
+                                        <circle cx="12" cy="12" r="2" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <span className={`text-[10px] pt-2 shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+
+                        {/* Message bubble with reactions underneath */}
+                        <div className="flex flex-col items-end">
+                            <div className="bg-[#13a4ec] text-white rounded-xl rounded-tr-sm px-4 py-2 text-sm leading-relaxed">
+                                {message.content}
+                            </div>
+                            {/* Reactions - aligned with message bubble */}
+                            {reactionCounts.length > 0 && (
+                                <div className="flex gap-1 mt-1 flex-wrap justify-end">
+                                    {reactionCounts.map(({ emoji, count, hasReacted }) => (
+                                        <button
+                                            key={emoji}
+                                            onClick={() => handleReaction(emoji)}
+                                            className={`flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] transition-colors ${hasReacted
+                                                ? 'bg-[#13a4ec]/10 border border-[#13a4ec]/30'
+                                                : isDark
+                                                    ? 'bg-[#162032] border border-[#1e3a5f]'
+                                                    : 'bg-slate-50 border border-slate-200'
+                                                }`}
+                                        >
+                                            <span>{emoji}</span>
+                                            <span className={hasReacted ? 'text-[#13a4ec]' : isDark ? 'text-slate-400' : 'text-slate-500'}>
+                                                {count}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <span className={`text-[10px] shrink-0 self-start mt-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                             {timeStr}
                         </span>
                     </div>
                 </div>
 
-                {/* Avatar */}
                 {showHeader ? (
                     <div className="size-9 rounded-full bg-gradient-to-tr from-[#13a4ec] to-cyan-400 shrink-0 flex items-center justify-center text-white font-bold text-xs ml-2">
                         ME
@@ -119,7 +277,6 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
 
     return (
         <div className="flex items-start py-0.5 group pr-12">
-            {/* Avatar */}
             {showHeader ? (
                 <div className={`size-9 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-xs bg-gradient-to-br ${avatarColors[avatarColorIndex]} mr-2`}>
                     {message.senderName.charAt(0).toUpperCase()}
@@ -129,7 +286,6 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
             )}
 
             <div className="flex flex-col">
-                {/* Header: Name + Badge */}
                 {showHeader && (
                     <div className="flex items-center gap-2 mb-0.5">
                         <span className={`text-sm font-bold ${isDark ? 'text-[#13a4ec]' : 'text-indigo-600'}`}>
@@ -145,7 +301,6 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
                     </div>
                 )}
 
-                {/* Reply preview */}
                 {message.replyToMessage && (
                     <div className={`text-[11px] px-2.5 py-1 rounded-lg mb-1 max-w-full truncate ${isDark ? 'bg-[#162032] text-slate-400' : 'bg-slate-100 text-slate-500'
                         }`}>
@@ -153,29 +308,31 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
                     </div>
                 )}
 
-                {/* Message row: Time + Bubble (time on left for receiver) */}
-                <div className="flex items-start gap-2">
-                    <span className={`text-[10px] pt-2 shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className="flex items-center gap-2 relative">
+                    <span className={`text-[10px] shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {timeStr}
                     </span>
-                    <div className={`rounded-xl rounded-tl-sm px-4 py-2 text-sm leading-relaxed ${isDark ? 'bg-[#162032] text-slate-200' : 'bg-white border border-slate-200 text-slate-800'
+                    <div className={`rounded-xl rounded-tl-sm px-4 py-2 text-sm leading-relaxed ${isDark ? 'bg-[#1a2836] text-slate-200' : 'bg-white border border-slate-200 text-slate-800'
                         }`}>
                         {message.content}
                     </div>
+
+                    {/* Action toolbar - appears on right for other messages */}
+                    <ActionToolbar />
                 </div>
 
-                {/* Reactions */}
+                {/* Existing reactions */}
                 {reactionCounts.length > 0 && (
-                    <div className="flex gap-1 mt-1 flex-wrap items-center ml-12">
+                    <div className="flex gap-1 mt-1 flex-wrap ml-12">
                         {reactionCounts.map(({ emoji, count, hasReacted }) => (
                             <button
                                 key={emoji}
                                 onClick={() => handleReaction(emoji)}
                                 className={`flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] transition-colors ${hasReacted
-                                        ? 'bg-[#13a4ec]/10 border border-[#13a4ec]/30'
-                                        : isDark
-                                            ? 'bg-[#162032] border border-[#1e3a5f]'
-                                            : 'bg-slate-50 border border-slate-200'
+                                    ? 'bg-[#13a4ec]/10 border border-[#13a4ec]/30'
+                                    : isDark
+                                        ? 'bg-[#162032] border border-[#1e3a5f]'
+                                        : 'bg-slate-50 border border-slate-200'
                                     }`}
                             >
                                 <span>{emoji}</span>
@@ -186,46 +343,6 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
                         ))}
                     </div>
                 )}
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pt-1 ml-1">
-                <div className="relative">
-                    <button
-                        onClick={() => setShowReactions(!showReactions)}
-                        className={`p-1 rounded-md transition-colors ${isDark ? 'hover:bg-[#162032]' : 'hover:bg-slate-100'}`}
-                        title="React"
-                    >
-                        <span className={`material-symbols-outlined text-base ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            add_reaction
-                        </span>
-                    </button>
-
-                    {showReactions && (
-                        <div className={`absolute left-0 bottom-full mb-1 flex gap-1 p-2 rounded-lg shadow-lg z-10 ${isDark ? 'bg-[#162032] border border-[#1e3a5f]' : 'bg-white border border-slate-200'
-                            }`}>
-                            {commonEmojis.map(emoji => (
-                                <button
-                                    key={emoji}
-                                    onClick={() => handleReaction(emoji)}
-                                    className="hover:scale-125 transition-transform text-lg"
-                                >
-                                    {emoji}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                <button
-                    onClick={handleReply}
-                    className={`p-1 rounded-md transition-colors ${isDark ? 'hover:bg-[#162032]' : 'hover:bg-slate-100'}`}
-                    title="Reply"
-                >
-                    <span className={`material-symbols-outlined text-base ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        reply
-                    </span>
-                </button>
             </div>
         </div>
     );
