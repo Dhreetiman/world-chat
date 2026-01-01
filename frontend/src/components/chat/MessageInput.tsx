@@ -57,11 +57,11 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
     };
 
     return (
-        <div className={`p-4 md:p-6 z-20 border-t ${isDark
+        <div className={`p-2 md:p-3 z-20 border-t ${isDark
             ? 'bg-[#0f1a2b]/90 backdrop-blur border-[#1e3a5f]'
             : 'bg-white/90 backdrop-blur border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]'
             }`}>
-            <div className="flex flex-col gap-3 max-w-4xl mx-auto w-full">
+            <div className="flex flex-col gap-2 max-w-4xl mx-auto w-full">
                 {/* Reply preview */}
                 {replyingTo && (
                     <div className={`flex items-center justify-between rounded-lg px-4 py-2 ${isDark
@@ -89,42 +89,38 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                     </div>
                 )}
 
-                {/* Username bar */}
-                <div className={`flex items-center justify-between rounded-lg px-4 py-2 ${isDark
-                    ? 'bg-[#13a4ec]/10 border border-[#13a4ec]/20'
-                    : 'bg-[#13a4ec]/5 border border-[#13a4ec]/20'
+                {/* Username bar - compact */}
+                <div className={`flex items-center justify-between rounded-md px-2 py-1 ${isDark ? 'bg-[#13a4ec]/10 border border-[#13a4ec]/20' : 'bg-[#13a4ec]/5 border border-[#13a4ec]/20'
                     }`}>
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="material-symbols-outlined text-[#13a4ec] text-lg">face</span>
+                    <div className="flex items-center gap-1.5 text-xs">
+                        <span className="material-symbols-outlined text-[#13a4ec] text-sm">face</span>
                         <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>Chatting as:</span>
-                        <span className={`font-bold px-2 py-0.5 rounded border ${isDark
-                            ? 'text-white bg-[#162032] border-[#1e3a5f] shadow-sm'
-                            : 'text-slate-900 bg-white border-slate-200 shadow-sm'
+                        <span className={`font-bold px-1.5 py-0.5 rounded border text-[11px] ${isDark ? 'text-white bg-[#162032] border-[#1e3a5f]' : 'text-slate-900 bg-white border-slate-200'
                             }`}>
                             {user?.username || 'Guest'}
                         </span>
                     </div>
                     <button
                         onClick={onUsernameClick}
-                        className="text-xs font-bold text-[#13a4ec] hover:text-sky-400 transition-colors uppercase tracking-wide"
+                        className="text-[10px] font-bold text-[#13a4ec] hover:text-sky-400 transition-colors uppercase tracking-wide"
                     >
-                        Change Name
+                        Change
                     </button>
                 </div>
 
-                {/* Input area */}
-                <div className={`relative flex items-end gap-2 rounded-2xl p-2 transition-all ${isDark
-                    ? 'bg-[#162032] border border-[#1e3a5f] focus-within:border-[#13a4ec]/50 focus-within:shadow-[0_0_0_1px_rgba(19,164,236,0.3)]'
-                    : 'bg-slate-50 border border-slate-200 focus-within:border-[#13a4ec]/50 focus-within:shadow-[0_0_0_1px_rgba(19,164,236,0.3)] focus-within:bg-white'
+                {/* Input area - compact */}
+                <div className={`relative flex items-end gap-1 rounded-xl p-1.5 transition-all ${isDark
+                    ? 'bg-[#162032] border border-[#1e3a5f] focus-within:border-[#13a4ec]/50'
+                    : 'bg-slate-50 border border-slate-200 focus-within:border-[#13a4ec]/50 focus-within:bg-white'
                     }`}>
-                    {/* Attachment button - disabled for now */}
+                    {/* Attachment button - hidden for compact view */}
                     <button
                         disabled
-                        className={`p-2 rounded-xl transition-colors shrink-0 opacity-50 cursor-not-allowed ${isDark ? 'text-slate-500' : 'text-slate-400'
+                        className={`p-1.5 rounded-lg transition-colors shrink-0 opacity-50 cursor-not-allowed hidden sm:block ${isDark ? 'text-slate-500' : 'text-slate-400'
                             }`}
                         title="Coming soon"
                     >
-                        <span className="material-symbols-outlined text-xl">add_circle</span>
+                        <span className="material-symbols-outlined text-lg">add_circle</span>
                     </button>
 
                     <textarea
@@ -134,25 +130,21 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                         onKeyDown={handleKeyDown}
                         placeholder="Type a message..."
                         rows={1}
-                        className={`w-full bg-transparent border-none focus:ring-0 resize-none py-3 max-h-32 text-sm leading-relaxed ${isDark
-                            ? 'text-white placeholder-slate-500'
-                            : 'text-slate-900 placeholder-slate-400'
+                        className={`w-full bg-transparent border-none focus:ring-0 resize-none py-2 max-h-24 text-xs leading-relaxed ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'
                             }`}
-                        style={{ minHeight: '44px' }}
+                        style={{ minHeight: '36px' }}
                     />
 
-                    <div className="flex items-center gap-1 shrink-0 pb-1">
+                    <div className="flex items-center gap-0.5 shrink-0">
                         {/* Emoji picker */}
                         <div className="relative">
                             <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className={`p-2 rounded-xl transition-colors ${isDark
-                                    ? 'text-slate-400 hover:text-[#13a4ec] hover:bg-[#1e3a5f]'
-                                    : 'text-slate-400 hover:text-[#13a4ec] hover:bg-slate-100'
+                                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-[#13a4ec] hover:bg-[#1e3a5f]' : 'text-slate-400 hover:text-[#13a4ec] hover:bg-slate-100'
                                     }`}
                                 title="Emoji"
                             >
-                                <span className="material-symbols-outlined text-xl">sentiment_satisfied</span>
+                                <span className="material-symbols-outlined text-lg">sentiment_satisfied</span>
                             </button>
 
                             {showEmojiPicker && (
@@ -160,8 +152,8 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                                     <EmojiPicker
                                         onEmojiClick={handleEmojiSelect}
                                         theme={isDark ? Theme.DARK : Theme.LIGHT}
-                                        width={320}
-                                        height={400}
+                                        width={280}
+                                        height={350}
                                     />
                                 </div>
                             )}
@@ -171,16 +163,16 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                         <button
                             onClick={handleSubmit}
                             disabled={!content.trim() || !isConnected}
-                            className="p-2.5 bg-[#13a4ec] hover:bg-sky-500 text-white rounded-xl shadow-lg shadow-[#13a4ec]/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            className="p-2 bg-[#13a4ec] hover:bg-sky-500 text-white rounded-lg shadow shadow-[#13a4ec]/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                         >
-                            <span className="material-symbols-outlined text-xl leading-none">send</span>
+                            <span className="material-symbols-outlined text-lg leading-none">send</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Help text */}
-                <p className={`text-center text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    Press <span className={`font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Enter</span> to send. Messages are not saved permanently.
+                {/* Help text - hidden on mobile */}
+                <p className={`text-center text-[9px] hidden sm:block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Press <span className={`font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Enter</span> to send
                 </p>
             </div>
         </div>

@@ -13,7 +13,7 @@ import JoinModal from '@/components/modals/JoinModal';
 import AvatarSelectModal from '@/components/modals/AvatarSelectModal';
 import SettingsPanel from '@/components/modals/SettingsPanel';
 import { userApi, messagesApi, roomApi } from '@/lib/api';
-import { Avatar } from '@/types';
+import { Avatar, Message } from '@/types';
 
 function ChatApp() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -66,10 +66,13 @@ function ChatApp() {
     try {
       const response = await messagesApi.getMessages(page, 50);
       if (response.data) {
+        // Backend returns messages in ascending order (oldest first)
+        // For page 1: just set the messages
+        // For page > 1: prepend older messages to the beginning
         if (page === 1) {
-          setMessages(response.data.reverse());
+          setMessages(response.data);
         } else {
-          setMessages(prev => [...response.data.reverse(), ...prev]);
+          setMessages((prev: Message[]) => [...response.data, ...prev]);
         }
         setHasMoreMessages(response.pagination.page < response.pagination.totalPages);
       }
