@@ -80,6 +80,14 @@ export const getUser = asyncHandler(async (req: Request, res: Response) => {
 export const updateUsername = asyncHandler(async (req: Request, res: Response) => {
     const guestId = req.cookies?.guestId || req.body.guestId;
 
+    // Validate guestId exists
+    if (!guestId) {
+        return res.status(401).json({
+            success: false,
+            error: { message: 'Not authenticated. Please refresh and try again.' },
+        });
+    }
+
     const user = await userService.updateUsername({
         guestId,
         username: req.body.username,
