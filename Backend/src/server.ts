@@ -13,10 +13,13 @@ const PORT = process.env.PORT || 4000;
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.io
+// Initialize Socket.io with CORS - allow all origins
 const io = new Server(server, {
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        origin: (origin, callback) => {
+            // Reflect the requesting origin (allows all origins with credentials)
+            callback(null, origin || true);
+        },
         methods: ['GET', 'POST'],
         credentials: true,
     },
