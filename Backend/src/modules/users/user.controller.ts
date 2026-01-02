@@ -22,11 +22,11 @@ export const registerGuest = asyncHandler(async (req: Request, res: Response) =>
         avatarId: req.body.avatarId,
     });
 
-    // Set httpOnly cookie
+    // Set httpOnly cookie - cross-origin compatible
     res.cookie('guestId', guestId, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true, // Required for SameSite: 'none'
+        sameSite: 'none', // Allow cross-origin requests
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
