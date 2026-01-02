@@ -40,9 +40,10 @@ export const getAvatarUrl = (id: number): string => {
 
 /**
  * Check if avatar ID is valid
+ * Allow IDs 1-15 to match database avatars
  */
 export const isValidAvatarId = (id: number): boolean => {
-    return AVATARS.some((avatar) => avatar.id === id);
+    return id >= 1 && id <= 15;
 };
 
 /**
