@@ -77,6 +77,8 @@ export const createMessage = async (input: CreateMessageInput) => {
 
 /**
  * Get messages (within 24 hours, paginated)
+ * Fetches newest messages first, then reverses for chronological display
+ * This ensures page 1 contains the LATEST messages, not oldest
  */
 export const getMessages = async (input: GetMessagesInput) => {
     const { page = 1, limit = 50 } = input;
@@ -88,7 +90,7 @@ export const getMessages = async (input: GetMessagesInput) => {
             where: {
                 createdAt: { gte: twentyFourHoursAgo },
             },
-            orderBy: { createdAt: 'asc' },
+            orderBy: { createdAt: 'desc' },  // Fetch newest first
             skip: (page - 1) * limit,
             take: limit,
             include: {
@@ -113,8 +115,9 @@ export const getMessages = async (input: GetMessagesInput) => {
         }),
     ]);
 
+    // Reverse to get chronological order (oldest to newest) for display
     return {
-        messages,
+        messages: messages.reverse(),
         pagination: {
             page,
             limit,
