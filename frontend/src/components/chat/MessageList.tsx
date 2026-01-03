@@ -78,7 +78,7 @@ export default function MessageList() {
     return (
         <div
             ref={containerRef}
-            className="flex-1 overflow-y-auto p-2 md:p-3 flex flex-col gap-0.5"
+            className="flex-1 overflow-y-auto overflow-x-hidden p-2 md:p-3 flex flex-col gap-0.5"
         >
             {/* Load More Button */}
             {hasMoreMessages && (

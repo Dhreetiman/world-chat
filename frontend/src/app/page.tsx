@@ -171,7 +171,7 @@ function ChatApp() {
         />
 
         {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col relative h-full">
+        <main className="flex-1 flex flex-col relative h-full overflow-x-hidden min-w-0">
           <ChatHeader
             onMenuClick={() => setMobileNavOpen(true)}
             onSearchChange={setSearchQuery}

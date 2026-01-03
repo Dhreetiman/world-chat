@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, ReactNode, RefObject } from 'react';
 import { Message, RoomInfo, Avatar } from '@/types';
 
 interface ChatContextType {
@@ -26,6 +26,8 @@ interface ChatContextType {
     getAvatarUrl: (avatarId: number) => string | undefined;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
+    inputRef: RefObject<HTMLTextAreaElement | null>;
+    focusInput: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -40,6 +42,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [avatars, setAvatars] = useState<Avatar[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    const focusInput = useCallback(() => {
+        // Use setTimeout to ensure the DOM has updated before focusing
+        setTimeout(() => {
+            inputRef.current?.focus();
+        }, 0);
+    }, []);
 
     const addMessage = useCallback((message: Message) => {
         setMessages(prev => [...prev, message]);
@@ -87,6 +97,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 getAvatarUrl,
                 searchQuery,
                 setSearchQuery,
+                inputRef,
+                focusInput,
             }}
         >
             {children}
