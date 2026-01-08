@@ -86,4 +86,78 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
             });
         }
     });
+
+    /**
+     * EDIT_MESSAGE - Edit a message (within 30 minutes, only by sender)
+     */
+    socket.on('EDIT_MESSAGE', async (data: { messageId: string; content: string }) => {
+        try {
+            const guestId = getGuestIdFromSocket(socket.id);
+
+            if (!guestId) {
+                socket.emit('ERROR', { code: 'NOT_AUTHENTICATED', message: 'Please join the chat first' });
+                return;
+            }
+
+            if (!data.messageId || !data.content) {
+                socket.emit('ERROR', { code: 'INVALID_DATA', message: 'Message ID and content are required' });
+                return;
+            }
+
+            // Edit message (service handles validation)
+            const updatedMessage = await messageService.editMessage(data.messageId, guestId, data.content);
+
+            // Get user for avatar
+            const user = await userService.getGuestUser(guestId);
+            const avatar = getAvatarById(user.avatarId);
+
+            // Broadcast to all users
+            io.to('global-chat').emit('MESSAGE_EDITED', {
+                id: updatedMessage.id,
+                content: updatedMessage.content,
+                isEdited: updatedMessage.isEdited,
+                editedAt: updatedMessage.editedAt,
+                senderId: updatedMessage.senderId,
+                senderName: updatedMessage.senderName,
+                avatarId: user.avatarId,
+                avatarUrl: avatar.url,
+            });
+
+        } catch (error: any) {
+            console.error('EDIT_MESSAGE error:', error);
+            socket.emit('ERROR', { code: 'EDIT_FAILED', message: error.message || 'Failed to edit message' });
+        }
+    });
+
+    /**
+     * DELETE_MESSAGE - Delete a message (soft delete, only by sender)
+     */
+    socket.on('DELETE_MESSAGE', async (data: { messageId: string }) => {
+        try {
+            const guestId = getGuestIdFromSocket(socket.id);
+
+            if (!guestId) {
+                socket.emit('ERROR', { code: 'NOT_AUTHENTICATED', message: 'Please join the chat first' });
+                return;
+            }
+
+            if (!data.messageId) {
+                socket.emit('ERROR', { code: 'INVALID_DATA', message: 'Message ID is required' });
+                return;
+            }
+
+            // Delete message (service handles validation)
+            const deletedMessage = await messageService.deleteMessage(data.messageId, guestId);
+
+            // Broadcast to all users
+            io.to('global-chat').emit('MESSAGE_DELETED', {
+                id: deletedMessage.id,
+                isDeleted: true,
+            });
+
+        } catch (error: any) {
+            console.error('DELETE_MESSAGE error:', error);
+            socket.emit('ERROR', { code: 'DELETE_FAILED', message: error.message || 'Failed to delete message' });
+        }
+    });
 };

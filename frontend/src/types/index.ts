@@ -13,6 +13,9 @@ export interface Message {
         senderName: string;
     } | null;
     reactions: Record<string, string[]>;
+    isEdited?: boolean;
+    isDeleted?: boolean;
+    editedAt?: string;
     createdAt: string;
 }
 
@@ -67,6 +70,15 @@ export interface SendReactionPayload {
     emoji: string;
 }
 
+export interface EditMessagePayload {
+    messageId: string;
+    content: string;
+}
+
+export interface DeleteMessagePayload {
+    messageId: string;
+}
+
 // API Response types
 export interface ApiResponse<T> {
     success: boolean;
@@ -86,3 +98,4 @@ export interface PaginatedResponse<T> {
         totalPages: number;
     };
 }
+

@@ -210,3 +210,101 @@ export const getMessageById = async (messageId: string) => {
 
     return message;
 };
+
+/**
+ * Edit a message (only sender can edit, within 30 minutes)
+ */
+export const editMessage = async (messageId: string, senderId: string, newContent: string) => {
+    // Find the message
+    const message = await prisma.message.findUnique({
+        where: { id: messageId },
+    });
+
+    if (!message) {
+        throw new NotFoundError('Message not found');
+    }
+
+    // Check if sender owns the message
+    if (message.senderId !== senderId) {
+        throw new BadRequestError('You can only edit your own messages');
+    }
+
+    // Check if message is deleted
+    if (message.isDeleted) {
+        throw new BadRequestError('Cannot edit a deleted message');
+    }
+
+    // Check 30-minute window
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    if (message.createdAt < thirtyMinutesAgo) {
+        throw new BadRequestError('Messages can only be edited within 30 minutes of sending');
+    }
+
+    // Validate new content
+    if (!newContent || !newContent.trim()) {
+        throw new BadRequestError('Message content cannot be empty');
+    }
+
+    // Sanitize and update
+    const sanitizedContent = sanitizeMessage(newContent);
+
+    const updatedMessage = await prisma.message.update({
+        where: { id: messageId },
+        data: {
+            content: sanitizedContent,
+            isEdited: true,
+            editedAt: new Date(),
+        },
+        include: {
+            replyToMessage: {
+                select: {
+                    id: true,
+                    content: true,
+                    senderName: true,
+                },
+            },
+            sender: {
+                select: {
+                    avatarId: true,
+                },
+            },
+        },
+    });
+
+    return updatedMessage;
+};
+
+/**
+ * Delete a message (soft delete, only sender can delete)
+ */
+export const deleteMessage = async (messageId: string, senderId: string) => {
+    // Find the message
+    const message = await prisma.message.findUnique({
+        where: { id: messageId },
+    });
+
+    if (!message) {
+        throw new NotFoundError('Message not found');
+    }
+
+    // Check if sender owns the message
+    if (message.senderId !== senderId) {
+        throw new BadRequestError('You can only delete your own messages');
+    }
+
+    // Check if already deleted
+    if (message.isDeleted) {
+        throw new BadRequestError('Message is already deleted');
+    }
+
+    // Soft delete
+    const deletedMessage = await prisma.message.update({
+        where: { id: messageId },
+        data: {
+            isDeleted: true,
+            content: null, // Clear content for privacy
+        },
+    });
+
+    return deletedMessage;
+};

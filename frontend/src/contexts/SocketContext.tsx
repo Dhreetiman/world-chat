@@ -5,7 +5,7 @@ import { Socket } from 'socket.io-client';
 import { getSocket, connectSocket, disconnectSocket } from '@/lib/socket';
 import { useUser } from './UserContext';
 import { useChat } from './ChatContext';
-import { Message, SendMessagePayload, SendReactionPayload } from '@/types';
+import { Message, SendMessagePayload, SendReactionPayload, EditMessagePayload, DeleteMessagePayload } from '@/types';
 
 interface SocketContextType {
     socket: Socket | null;
@@ -14,6 +14,8 @@ interface SocketContextType {
     setUsername: (username: string, avatarId: number) => void;
     sendMessage: (payload: SendMessagePayload) => void;
     sendReaction: (payload: SendReactionPayload) => void;
+    editMessage: (payload: EditMessagePayload) => void;
+    deleteMessage: (payload: DeleteMessagePayload) => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -22,7 +24,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const { user, registerUser, refreshUser } = useUser();
-    const { addMessage, updateMessageReactions, setOnlineCount } = useChat();
+    const { addMessage, updateMessageReactions, updateMessage, markMessageDeleted, setOnlineCount } = useChat();
 
     // Initialize socket connection
     useEffect(() => {
@@ -90,6 +92,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         s.on('USERNAME_SET', onUsernameSet);
         s.on('SYSTEM_MESSAGE', onSystemMessage);
 
+        // Edit/Delete message listeners
+        const onMessageEdited = (data: { id: string; content: string; isEdited: boolean; editedAt: string }) => {
+            updateMessage(data.id, {
+                content: data.content,
+                isEdited: data.isEdited,
+                editedAt: data.editedAt,
+            });
+        };
+
+        const onMessageDeleted = (data: { id: string; isDeleted: boolean }) => {
+            markMessageDeleted(data.id);
+        };
+
+        s.on('MESSAGE_EDITED', onMessageEdited);
+        s.on('MESSAGE_DELETED', onMessageDeleted);
+
         // Connect
         connectSocket();
 
@@ -103,9 +121,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             s.off('USERNAME_REQUIRED', onUsernameRequired);
             s.off('USERNAME_SET', onUsernameSet);
             s.off('SYSTEM_MESSAGE', onSystemMessage);
+            s.off('MESSAGE_EDITED', onMessageEdited);
+            s.off('MESSAGE_DELETED', onMessageDeleted);
             disconnectSocket();
         };
-    }, [addMessage, updateMessageReactions, setOnlineCount, refreshUser]);
+    }, [addMessage, updateMessageReactions, updateMessage, markMessageDeleted, setOnlineCount, refreshUser]);
 
     // Join chat when user is available
     const joinChat = useCallback(async () => {
@@ -151,6 +171,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         socket.emit('SEND_REACTION', payload);
     }, [socket, isConnected]);
 
+    // Edit message
+    const editMessage = useCallback((payload: EditMessagePayload) => {
+        if (!socket || !isConnected) return;
+        socket.emit('EDIT_MESSAGE', payload);
+    }, [socket, isConnected]);
+
+    // Delete message
+    const deleteMessage = useCallback((payload: DeleteMessagePayload) => {
+        if (!socket || !isConnected) return;
+        socket.emit('DELETE_MESSAGE', payload);
+    }, [socket, isConnected]);
+
     return (
         <SocketContext.Provider
             value={{
@@ -160,6 +192,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
                 setUsername,
                 sendMessage,
                 sendReaction,
+                editMessage,
+                deleteMessage,
             }}
         >
             {children}

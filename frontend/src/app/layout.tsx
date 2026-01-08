@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   title: "Openwave - Global Chat Room",
   description: "Join the conversation instantly. No login, no history tracking. Just pick a name and say hello to the world.",
   keywords: ["chat", "global", "anonymous", "real-time", "websocket"],
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   openGraph: {
     title: "Openwave",
     description: "Join the conversation instantly. No login required.",

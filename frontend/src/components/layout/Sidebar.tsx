@@ -28,7 +28,13 @@ export default function Sidebar({ onSettingsClick }: SidebarProps) {
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
                         <div className="bg-gradient-to-br from-[#13a4ec] to-cyan-300 rounded-2xl size-12 flex items-center justify-center shrink-0 shadow-lg shadow-[#13a4ec]/20">
-                            <span className="material-symbols-outlined text-white text-3xl">public</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" className="size-7">
+                                <circle cx="16" cy="16" r="12" fill="none" stroke="white" strokeWidth="1.5" strokeOpacity="0.3" />
+                                <ellipse cx="16" cy="16" rx="4" ry="12" fill="none" stroke="white" strokeWidth="1.5" />
+                                <path d="M4 16h24" stroke="white" strokeWidth="1.5" />
+                                <path d="M6 10h20" stroke="white" strokeWidth="1" strokeOpacity="0.6" />
+                                <path d="M6 22h20" stroke="white" strokeWidth="1" strokeOpacity="0.6" />
+                            </svg>
                         </div>
                         <div className="flex flex-col">
                             <h1 className={`text-xl font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'

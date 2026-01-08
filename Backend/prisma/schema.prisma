@@ -34,6 +34,9 @@ model Message {
   replyToMessage   Message?  @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
   replies          Message[] @relation("MessageReplies")
   reactions        Json      @default("{}")
+  isEdited         Boolean   @default(false)
+  isDeleted        Boolean   @default(false)
+  editedAt         DateTime?
   createdAt        DateTime  @default(now())
   sender           GuestUser @relation(fields: [senderId], references: [guestId], onDelete: Cascade)
 

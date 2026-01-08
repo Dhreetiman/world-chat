@@ -15,6 +15,8 @@ interface ChatContextType {
     setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
     addMessage: (message: Message) => void;
     updateMessageReactions: (messageId: string, reactions: Record<string, string[]>) => void;
+    updateMessage: (messageId: string, updates: Partial<Message>) => void;
+    markMessageDeleted: (messageId: string) => void;
     setReplyingTo: (message: Message | null) => void;
     setRoomInfo: (info: RoomInfo | null) => void;
     setOnlineCount: (count: number) => void;
@@ -63,6 +65,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         );
     }, []);
 
+    const updateMessage = useCallback((messageId: string, updates: Partial<Message>) => {
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === messageId ? { ...msg, ...updates } : msg
+            )
+        );
+    }, []);
+
+    const markMessageDeleted = useCallback((messageId: string) => {
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === messageId ? { ...msg, isDeleted: true, content: null } : msg
+            )
+        );
+    }, []);
+
     const loadMoreMessages = useCallback(() => {
         setCurrentPage(prev => prev + 1);
     }, []);
@@ -86,6 +104,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 setMessages,
                 addMessage,
                 updateMessageReactions,
+                updateMessage,
+                markMessageDeleted,
                 setReplyingTo,
                 setRoomInfo,
                 setOnlineCount,
