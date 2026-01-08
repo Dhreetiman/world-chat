@@ -1,42 +1,202 @@
 'use client';
 
-import { useState, KeyboardEvent } from 'react';
+import { useState, KeyboardEvent, useRef, useEffect } from 'react';
 import { useUser } from '@/contexts/UserContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { useChat } from '@/contexts/ChatContext';
 import CustomEmojiPicker from './CustomEmojiPicker';
+import FilePreview from './FilePreview';
 
 interface MessageInputProps {
     onUsernameClick: () => void;
 }
 
+// File size limits
+const FILE_SIZE_LIMITS = {
+    video: 60 * 1024 * 1024, // 60 MB
+    default: 20 * 1024 * 1024, // 20 MB
+};
+
+// Allowed file types
+const ALLOWED_FILE_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'video/mp4', 'video/webm', 'video/quicktime',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
+const getFileCategory = (mimeType: string): 'image' | 'video' | 'document' => {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/')) return 'video';
+    return 'document';
+};
+
 export default function MessageInput({ onUsernameClick }: MessageInputProps) {
     const [content, setContent] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { user, settings, isUsernameSet } = useUser();
     const { sendMessage, isConnected } = useSocket();
-    const { replyingTo, setReplyingTo, inputRef } = useChat(); // inputRef added here
+    const { replyingTo, setReplyingTo, inputRef } = useChat();
 
     const isDark = settings.theme === 'dark';
 
-    const handleSubmit = () => {
-        if (!content.trim() || !isConnected) return;
+    // Generate preview URL for image/video files
+    useEffect(() => {
+        if (selectedFile) {
+            const category = getFileCategory(selectedFile.type);
+            if (category === 'image' || category === 'video') {
+                const url = URL.createObjectURL(selectedFile);
+                setFilePreviewUrl(url);
+                return () => URL.revokeObjectURL(url);
+            }
+        }
+        setFilePreviewUrl(null);
+    }, [selectedFile]);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Reset error
+        setUploadError(null);
+
+        // Validate file type
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            setUploadError('File type not supported');
+            return;
+        }
+
+        // Validate file size
+        const category = getFileCategory(file.type);
+        const limit = category === 'video' ? FILE_SIZE_LIMITS.video : FILE_SIZE_LIMITS.default;
+        if (file.size > limit) {
+            const limitMB = Math.round(limit / 1024 / 1024);
+            setUploadError(`File too large. Maximum: ${limitMB}MB for ${category}s`);
+            return;
+        }
+
+        setSelectedFile(file);
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleCancelFile = () => {
+        setSelectedFile(null);
+        setFilePreviewUrl(null);
+        setUploadError(null);
+    };
+
+    const uploadToS3 = async (file: File): Promise<string> => {
+        // 1. Get pre-signed URL from backend
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/presigned-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                fileName: file.name,
+                fileType: file.type,
+                fileSize: file.size,
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Failed to get upload URL');
+        }
+
+        const { data } = await response.json();
+        const { uploadUrl, fileUrl } = data;
+
+        // 2. Upload directly to S3 with progress tracking
+        await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    setUploadProgress(percent);
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve();
+                } else {
+                    console.error('S3 upload error:', xhr.status, xhr.statusText, xhr.responseText);
+                    reject(new Error(`S3 upload failed: ${xhr.status} ${xhr.statusText}`));
+                }
+            });
+
+            xhr.addEventListener('error', (e) => {
+                console.error('XHR error:', e);
+                reject(new Error('Network error during upload. Check S3 CORS configuration.'));
+            });
+
+            xhr.open('PUT', uploadUrl);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(file);
+        });
+
+        return fileUrl;
+    };
+
+    const handleSubmit = async () => {
+        if ((!content.trim() && !selectedFile) || !isConnected) return;
 
         if (!isUsernameSet) {
             onUsernameClick();
             return;
         }
 
-        sendMessage({
-            content: content.trim(),
-            replyToMessageId: replyingTo?.id,
-        });
+        try {
+            let fileUrl: string | undefined;
+            let fileType: string | undefined;
+            let fileName: string | undefined;
+            let fileSize: number | undefined;
 
-        setContent('');
-        setReplyingTo(null);
-        setShowEmojiPicker(false);
+            // Upload file if selected
+            if (selectedFile) {
+                setIsUploading(true);
+                setUploadProgress(0);
+
+                fileUrl = await uploadToS3(selectedFile);
+                fileType = selectedFile.type;
+                fileName = selectedFile.name;
+                fileSize = selectedFile.size;
+            }
+
+            // Send message
+            sendMessage({
+                content: content.trim() || undefined,
+                fileUrl,
+                fileType,
+                fileName,
+                fileSize,
+                replyToMessageId: replyingTo?.id,
+            });
+
+            // Reset state
+            setContent('');
+            setSelectedFile(null);
+            setFilePreviewUrl(null);
+            setReplyingTo(null);
+            setShowEmojiPicker(false);
+            setUploadError(null);
+        } catch (error: any) {
+            setUploadError(error.message || 'Upload failed');
+        } finally {
+            setIsUploading(false);
+            setUploadProgress(0);
+        }
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -84,6 +244,25 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                     </div>
                 )}
 
+                {/* File preview */}
+                {selectedFile && (
+                    <FilePreview
+                        file={selectedFile}
+                        previewUrl={filePreviewUrl}
+                        uploadProgress={uploadProgress}
+                        isUploading={isUploading}
+                        onCancel={handleCancelFile}
+                        isDark={isDark}
+                    />
+                )}
+
+                {/* Upload error */}
+                {uploadError && (
+                    <div className="text-xs text-red-500 px-3 py-1.5 bg-red-500/10 rounded-lg border border-red-500/20">
+                        {uploadError}
+                    </div>
+                )}
+
                 {/* Username bar */}
                 <div className={`flex items-center justify-between rounded-lg px-3 py-1.5 ${isDark
                     ? 'bg-[#13a4ec]/10 border border-[#13a4ec]/20'
@@ -120,10 +299,25 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                         isDark={isDark}
                     />
 
+                    {/* Hidden file input */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept={ALLOWED_FILE_TYPES.join(',')}
+                        onChange={handleFileSelect}
+                        className="hidden"
+                    />
+
                     {/* Attachment button */}
                     <button
-                        disabled
-                        className="size-8 flex items-center justify-center rounded-lg opacity-50 cursor-not-allowed outline-none text-[#92b7c9]"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className={`size-8 flex items-center justify-center rounded-lg transition-colors outline-none ${isUploading
+                            ? 'opacity-50 cursor-not-allowed text-[#92b7c9]'
+                            : isDark
+                                ? 'text-[#92b7c9] hover:text-[#13a4ec] hover:bg-[#233c48]'
+                                : 'text-slate-400 hover:text-[#13a4ec] hover:bg-slate-100'
+                            }`}
                         title="Add Attachment"
                     >
                         <span className="material-symbols-outlined text-xl">add_circle</span>
@@ -137,10 +331,11 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                         onKeyDown={handleKeyDown}
                         placeholder="Type a message..."
                         rows={1}
+                        disabled={isUploading}
                         className={`flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none resize-none py-2 text-sm leading-relaxed ${isDark
                             ? 'text-white placeholder-[#5e7a8a]'
                             : 'text-slate-900 placeholder-slate-400'
-                            }`}
+                            } ${isUploading ? 'opacity-50' : ''}`}
                         style={{ minHeight: '36px', maxHeight: '80px' }}
                     />
 
@@ -149,12 +344,13 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                         {/* Emoji picker button */}
                         <button
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            disabled={isUploading}
                             className={`size-8 flex items-center justify-center rounded-lg transition-colors outline-none ${showEmojiPicker
                                 ? 'bg-[#233c48] text-[#13a4ec]'
                                 : isDark
                                     ? 'text-[#92b7c9] hover:text-[#13a4ec] hover:bg-[#233c48]'
                                     : 'text-slate-400 hover:text-[#13a4ec] hover:bg-slate-100'
-                                }`}
+                                } ${isUploading ? 'opacity-50' : ''}`}
                             title="Emoji"
                         >
                             <span className="material-symbols-outlined text-xl">sentiment_satisfied</span>
@@ -163,7 +359,7 @@ export default function MessageInput({ onUsernameClick }: MessageInputProps) {
                         {/* Send button */}
                         <button
                             onClick={handleSubmit}
-                            disabled={!content.trim() || !isConnected}
+                            disabled={(!content.trim() && !selectedFile) || !isConnected || isUploading}
                             className="size-8 bg-[#13a4ec] hover:bg-sky-500 text-white rounded-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 outline-none"
                         >
                             <span className="material-symbols-outlined text-xl">send</span>

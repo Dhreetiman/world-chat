@@ -3,6 +3,10 @@ export interface Message {
     id: string;
     content: string | null;
     imageUrl: string | null;
+    fileUrl?: string;
+    fileType?: string;
+    fileName?: string;
+    fileSize?: number;
     senderId: string;
     senderName: string;
     avatarId: number;
@@ -62,6 +66,10 @@ export interface SetUsernamePayload {
 export interface SendMessagePayload {
     content?: string;
     imageUrl?: string;
+    fileUrl?: string;
+    fileType?: string;
+    fileName?: string;
+    fileSize?: number;
     replyToMessageId?: string;
 }
 

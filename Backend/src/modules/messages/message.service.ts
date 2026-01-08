@@ -5,6 +5,10 @@ import { NotFoundError, BadRequestError } from '../../middlewares/errorHandler';
 export interface CreateMessageInput {
     content?: string;
     imageUrl?: string;
+    fileUrl?: string;
+    fileType?: string;
+    fileName?: string;
+    fileSize?: number;
     senderId: string;
     senderName: string;
     replyToMessageId?: string;
@@ -25,11 +29,11 @@ export interface SearchMessagesInput {
  * Create a new message
  */
 export const createMessage = async (input: CreateMessageInput) => {
-    const { content, imageUrl, senderId, senderName, replyToMessageId } = input;
+    const { content, imageUrl, fileUrl, fileType, fileName, fileSize, senderId, senderName, replyToMessageId } = input;
 
-    // Validate: must have content or image
-    if (!content && !imageUrl) {
-        throw new BadRequestError('Message must have content or an image');
+    // Validate: must have content, image, or file
+    if (!content && !imageUrl && !fileUrl) {
+        throw new BadRequestError('Message must have content, an image, or a file');
     }
 
     // Sanitize message content
@@ -51,6 +55,10 @@ export const createMessage = async (input: CreateMessageInput) => {
         data: {
             content: sanitizedContent,
             imageUrl: imageUrl || null,
+            fileUrl: fileUrl || null,
+            fileType: fileType || null,
+            fileName: fileName || null,
+            fileSize: fileSize || null,
             senderId,
             senderName,
             replyToMessageId: replyToMessageId || null,

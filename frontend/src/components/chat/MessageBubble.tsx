@@ -6,6 +6,7 @@ import { useSocket } from '@/contexts/SocketContext';
 import { useChat } from '@/contexts/ChatContext';
 import dayjs from 'dayjs';
 import { useState, useRef, useEffect } from 'react';
+import FileMessage from './FileMessage';
 
 interface MessageBubbleProps {
     message: Message;
@@ -313,6 +314,18 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
                     <div onClick={scrollToReply} className={`text-xs mb-2 pb-2 border-b cursor-pointer hover:opacity-80 transition-opacity ${isOwn ? 'border-white/20' : isDark ? 'border-[#375a6b] text-[#92b7c9]' : 'border-slate-200 text-slate-500'}`}>
                         <span className={`font-semibold ${isOwn ? 'text-white' : isDark ? 'text-[#13a4ec]' : 'text-indigo-500'}`}>↩ {message.replyToMessage.senderName}</span>
                         <span className={isOwn ? 'text-white/70' : 'opacity-70'}> · {message.replyToMessage.content?.slice(0, 35)}...</span>
+                    </div>
+                )}
+                {message.fileUrl && message.fileType && message.fileName && message.fileSize && (
+                    <div className={message.content ? 'mb-2' : ''}>
+                        <FileMessage
+                            fileUrl={message.fileUrl}
+                            fileType={message.fileType}
+                            fileName={message.fileName}
+                            fileSize={message.fileSize}
+                            isDark={isDark}
+                            isOwn={isOwn}
+                        />
                     </div>
                 )}
                 {message.content}

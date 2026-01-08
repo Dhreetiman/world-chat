@@ -28,6 +28,10 @@ model Message {
   id               String    @id @default(uuid())
   content          String?
   imageUrl         String?
+  fileUrl          String?   // S3 file URL
+  fileType         String?   // MIME type (image/jpeg, video/mp4, etc.)
+  fileName         String?   // Original filename
+  fileSize         Int?      // Size in bytes
   senderId         String
   senderName       String
   replyToMessageId String?

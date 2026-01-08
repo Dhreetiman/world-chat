@@ -1,9 +1,11 @@
 import cron from 'node-cron';
 import prisma from '../config/db';
+import { deleteFile, extractS3KeyFromUrl } from '../config/s3';
 
 /**
  * Message cleanup job
  * Runs every hour and deletes messages older than 24 hours
+ * Also cleans up associated S3 files
  */
 export const startMessageCleanupJob = () => {
     // Run every hour at minute 0
@@ -13,13 +15,42 @@ export const startMessageCleanupJob = () => {
 
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
+            // First, find messages with files to delete from S3
+            const messagesWithFiles = await prisma.message.findMany({
+                where: {
+                    createdAt: { lt: twentyFourHoursAgo },
+                    fileUrl: { not: null },
+                },
+                select: {
+                    id: true,
+                    fileUrl: true,
+                },
+            });
+
+            // Delete S3 files
+            let s3DeletedCount = 0;
+            for (const message of messagesWithFiles) {
+                if (message.fileUrl) {
+                    const key = extractS3KeyFromUrl(message.fileUrl);
+                    if (key) {
+                        try {
+                            await deleteFile(key);
+                            s3DeletedCount++;
+                        } catch (error) {
+                            console.error(`Failed to delete S3 file: ${key}`, error);
+                        }
+                    }
+                }
+            }
+
+            // Now delete the messages from DB
             const result = await prisma.message.deleteMany({
                 where: {
                     createdAt: { lt: twentyFourHoursAgo },
                 },
             });
 
-            console.log(`🧹 Cleanup complete: Deleted ${result.count} old messages`);
+            console.log(`🧹 Cleanup complete: Deleted ${result.count} old messages and ${s3DeletedCount} S3 files`);
         } catch (error) {
             console.error('❌ Message cleanup job failed:', error);
         }

@@ -14,6 +14,10 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
     socket.on('SEND_MESSAGE', async (data: {
         content?: string;
         imageUrl?: string;
+        fileUrl?: string;
+        fileType?: string;
+        fileName?: string;
+        fileSize?: number;
         replyToMessageId?: string;
     }) => {
         try {
@@ -34,8 +38,8 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
             }
 
             // Validate message
-            if (!data.content && !data.imageUrl) {
-                socket.emit('ERROR', { code: 'INVALID_MESSAGE', message: 'Message must have content or image' });
+            if (!data.content && !data.imageUrl && !data.fileUrl) {
+                socket.emit('ERROR', { code: 'INVALID_MESSAGE', message: 'Message must have content, image, or file' });
                 return;
             }
 
@@ -43,6 +47,10 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
             const message = await messageService.createMessage({
                 content: data.content,
                 imageUrl: data.imageUrl,
+                fileUrl: data.fileUrl,
+                fileType: data.fileType,
+                fileName: data.fileName,
+                fileSize: data.fileSize,
                 senderId: guestId,
                 senderName: user.username,
                 replyToMessageId: data.replyToMessageId,
@@ -56,6 +64,10 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
                 id: message.id,
                 content: message.content,
                 imageUrl: message.imageUrl,
+                fileUrl: message.fileUrl,
+                fileType: message.fileType,
+                fileName: message.fileName,
+                fileSize: message.fileSize,
                 senderId: message.senderId,
                 senderName: message.senderName,
                 avatarId: user.avatarId,
