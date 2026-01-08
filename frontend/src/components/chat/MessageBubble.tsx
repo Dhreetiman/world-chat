@@ -50,9 +50,9 @@ export default function MessageBubble({ message, showHeader = true }: MessageBub
     // Check if message can be edited (within 30 minutes)
     const canEdit = isOwnMessage && !message.isDeleted && dayjs().diff(dayjs(message.createdAt), 'minute') < 30;
 
-    // Get avatar URL for this message's sender
-    const senderAvatarUrl = getAvatarUrl(message.avatarId);
-    const ownAvatarUrl = user?.avatarId ? getAvatarUrl(user.avatarId) : undefined;
+    // Get avatar URL - prioritize custom avatar, fallback to predefined
+    const senderAvatarUrl = message.customAvatarUrl || getAvatarUrl(message.avatarId);
+    const ownAvatarUrl = user?.customAvatarUrl || (user?.avatarId ? getAvatarUrl(user.avatarId) : undefined);
 
     // Focus edit input when entering edit mode
     useEffect(() => {

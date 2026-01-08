@@ -3,6 +3,25 @@ import { asyncHandler } from '../../middlewares/errorHandler';
 import * as userService from './user.service';
 import * as avatarService from '../avatars/avatar.service';
 import { generateGuestId } from '../../utils/uuid';
+import multer from 'multer';
+
+// Multer memory storage for avatar uploads
+const storage = multer.memoryStorage();
+
+export const upload = multer({
+    storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+    },
+    fileFilter: (_req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPG, PNG, and WebP are allowed.'));
+        }
+    },
+});
 
 /**
  * Register/Get guest user
@@ -36,6 +55,7 @@ export const registerGuest = asyncHandler(async (req: Request, res: Response) =>
             guestId: user.guestId,
             username: user.username,
             avatarId: user.avatarId,
+            customAvatarUrl: user.customAvatarUrl,
         },
     });
 });
@@ -62,6 +82,7 @@ export const getUser = asyncHandler(async (req: Request, res: Response) => {
                 guestId: user.guestId,
                 username: user.username,
                 avatarId: user.avatarId,
+                customAvatarUrl: user.customAvatarUrl,
                 settings: user.settings,
             },
         });
@@ -100,6 +121,7 @@ export const updateUsername = asyncHandler(async (req: Request, res: Response) =
             guestId: user.guestId,
             username: user.username,
             avatarId: user.avatarId,
+            customAvatarUrl: user.customAvatarUrl,
         },
     });
 });
@@ -113,5 +135,56 @@ export const getAvatars = asyncHandler(async (_req: Request, res: Response) => {
     res.status(200).json({
         success: true,
         data: avatars,
+    });
+});
+
+/**
+ * Upload custom avatar
+ */
+export const uploadAvatar = asyncHandler(async (req: Request, res: Response) => {
+    const guestId = req.cookies?.guestId || req.body.guestId;
+
+    if (!guestId) {
+        return res.status(401).json({
+            success: false,
+            error: { message: 'Not authenticated' },
+        });
+    }
+
+    if (!req.file) {
+        return res.status(400).json({
+            success: false,
+            error: { message: 'No file provided' },
+        });
+    }
+
+    const avatarUrl = await userService.uploadCustomAvatar(guestId, req.file);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            customAvatarUrl: avatarUrl,
+        },
+    });
+});
+
+/**
+ * Delete custom avatar
+ */
+export const deleteAvatar = asyncHandler(async (req: Request, res: Response) => {
+    const guestId = req.cookies?.guestId || req.body.guestId;
+
+    if (!guestId) {
+        return res.status(401).json({
+            success: false,
+            error: { message: 'Not authenticated' },
+        });
+    }
+
+    await userService.deleteCustomAvatar(guestId);
+
+    res.status(200).json({
+        success: true,
+        message: 'Custom avatar deleted',
     });
 });

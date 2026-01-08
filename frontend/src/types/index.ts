@@ -10,11 +10,15 @@ export interface Message {
     senderId: string;
     senderName: string;
     avatarId: number;
+    customAvatarUrl?: string;
     userTitle?: string;
     replyToMessage?: {
         id: string;
         content: string | null;
+        imageUrl: string | null;
         senderName: string;
+        avatarId: number;
+        customAvatarUrl?: string;
     } | null;
     reactions: Record<string, string[]>;
     isEdited?: boolean;
@@ -28,6 +32,7 @@ export interface User {
     guestId: string;
     username: string;
     avatarId: number;
+    customAvatarUrl?: string;
     userTitle: string;
 }
 

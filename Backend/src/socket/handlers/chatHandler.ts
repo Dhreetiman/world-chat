@@ -71,6 +71,7 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
                 senderId: message.senderId,
                 senderName: message.senderName,
                 avatarId: user.avatarId,
+                customAvatarUrl: user.customAvatarUrl || null,
                 avatarUrl: avatar.url,
                 replyToMessage: message.replyToMessage,
                 reactions: message.reactions,

@@ -122,5 +122,24 @@ export const extractS3KeyFromUrl = (url: string): string | null => {
     }
 };
 
+/**
+ * Optimize and resize image for avatar upload
+ * Resizes to 200x200px, converts to JPEG, compresses
+ */
+export const optimizeAvatarImage = async (buffer: Buffer): Promise<Buffer> => {
+    const sharp = require('sharp');
+
+    return await sharp(buffer)
+        .resize(200, 200, {
+            fit: 'cover',
+            position: 'center',
+        })
+        .jpeg({
+            quality: 85,
+            progressive: true,
+        })
+        .toBuffer();
+};
+
 export { s3Client, BUCKET_NAME };
 export default s3Client;

@@ -16,4 +16,10 @@ router.patch('/username', apiLimiter, userController.updateUsername);
 // GET /api/users/avatars - Get available avatars
 router.get('/avatars', userController.getAvatars);
 
+// POST /api/users/avatar - Upload custom avatar
+router.post('/avatar', apiLimiter, userController.upload.single('avatar'), userController.uploadAvatar);
+
+// DELETE /api/users/avatar - Delete custom avatar
+router.delete('/avatar', apiLimiter, userController.deleteAvatar);
+
 export default router;

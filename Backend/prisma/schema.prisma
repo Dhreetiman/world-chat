@@ -10,15 +10,16 @@ datasource db {
 
 // Guest User - Anonymous users with generated UUID
 model GuestUser {
-  id           String        @id @default(uuid())
-  guestId      String        @unique
-  username     String
-  avatarId     Int           @default(1) // References pre-stored avatar (1-10)
-  userTitle    String        @default("common") // "common", "VIP", "Activist", "Warrior", "Pro Gamer" etc.
-  lastActiveAt DateTime      @default(now())
-  createdAt    DateTime      @default(now())
-  messages     Message[]
-  settings     UserSettings?
+  id              String        @id @default(uuid())
+  guestId         String        @unique
+  username        String
+  avatarId        Int           @default(1) // References pre-stored avatar (1-10)
+  customAvatarUrl String?       // Custom uploaded avatar URL from S3
+  userTitle       String        @default("common") // "common", "VIP", "Activist", "Warrior", "Pro Gamer" etc.
+  lastActiveAt    DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  messages        Message[]
+  settings        UserSettings?
 
   @@index([lastActiveAt])
 }

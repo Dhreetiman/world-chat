@@ -54,8 +54,8 @@ export default function JoinModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
             <div className={`rounded-3xl shadow-2xl w-full max-w-[420px] overflow-hidden relative flex flex-col items-center ${isDark
-                    ? 'bg-[#182830] border border-[#233c48]'
-                    : 'bg-white border border-slate-100'
+                ? 'bg-[#182830] border border-[#233c48]'
+                : 'bg-white border border-slate-100'
                 }`}>
                 {/* Gradient overlay */}
                 <div className="absolute top-0 w-full h-32 bg-gradient-to-b from-[#13a4ec]/10 to-transparent pointer-events-none" />
@@ -87,7 +87,13 @@ export default function JoinModal({
                     >
                         <div className={`w-32 h-32 rounded-full border-[6px] shadow-xl bg-gradient-to-br from-[#13a4ec] to-cyan-400 flex items-center justify-center overflow-hidden relative ${isDark ? 'border-[#233c48]' : 'border-slate-50'
                             }`}>
-                            {selectedAvatar?.url ? (
+                            {/* Show custom avatar if available, otherwise show predefined */}
+                            {user?.customAvatarUrl ? (
+                                <div
+                                    className="w-full h-full bg-cover bg-center"
+                                    style={{ backgroundImage: `url(${user.customAvatarUrl})` }}
+                                />
+                            ) : selectedAvatar?.url ? (
                                 <div
                                     className="w-full h-full bg-cover bg-center"
                                     style={{ backgroundImage: `url(${selectedAvatar.url})` }}
@@ -129,8 +135,8 @@ export default function JoinModal({
                                     placeholder="Enter username"
                                     maxLength={20}
                                     className={`w-full border rounded-xl py-3.5 pl-12 pr-4 font-semibold focus:outline-none focus:ring-2 focus:ring-[#13a4ec]/20 focus:border-[#13a4ec] transition-all shadow-sm ${isDark
-                                            ? 'bg-[#101c22] border-[#233c48] text-white placeholder:text-slate-500'
-                                            : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400'
+                                        ? 'bg-[#101c22] border-[#233c48] text-white placeholder:text-slate-500'
+                                        : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400'
                                         }`}
                                 />
                             </div>

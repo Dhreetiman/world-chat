@@ -112,6 +112,7 @@ export const getMessages = async (input: GetMessagesInput) => {
                 sender: {
                     select: {
                         avatarId: true,
+                        customAvatarUrl: true,
                     },
                 },
             },

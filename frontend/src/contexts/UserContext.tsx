@@ -14,6 +14,8 @@ interface UserContextType {
     updateTheme: (theme: 'dark' | 'light') => Promise<void>;
     registerUser: () => Promise<void>;
     refreshUser: () => Promise<void>;
+    uploadAvatar: (file: File) => Promise<string>;
+    deleteAvatar: () => Promise<void>;
 }
 
 const defaultSettings: UserSettings = {
@@ -116,6 +118,47 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // Upload custom avatar
+    const uploadAvatar = useCallback(async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/avatar`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Failed to upload avatar');
+        }
+
+        const result = await response.json();
+        const avatarUrl = result.data.customAvatarUrl;
+
+        // Update local user state
+        setUser(prev => prev ? { ...prev, customAvatarUrl: avatarUrl } : null);
+
+        return avatarUrl;
+    }, []);
+
+    // Delete custom avatar
+    const deleteAvatar = useCallback(async () => {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/avatar`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Failed to delete avatar');
+        }
+
+        // Update local user state
+        setUser(prev => prev ? { ...prev, customAvatarUrl: undefined } : null);
+    }, []);
+
     return (
         <UserContext.Provider
             value={{
@@ -128,6 +171,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 updateTheme,
                 registerUser,
                 refreshUser,
+                uploadAvatar,
+                deleteAvatar,
             }}
         >
             {children}
