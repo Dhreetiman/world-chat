@@ -52,116 +52,131 @@ export default function JoinModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
-            <div className={`rounded-3xl shadow-2xl w-full max-w-[420px] overflow-hidden relative flex flex-col items-center ${isDark
-                ? 'bg-[#182830] border border-[#233c48]'
-                : 'bg-white border border-slate-100'
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+            <div className={`rounded-2xl w-full max-w-md overflow-hidden relative ${isDark
+                ? 'bg-gradient-to-br from-[#1a2332] to-[#0f1419]'
+                : 'bg-gradient-to-br from-white to-slate-50'
                 }`}>
-                {/* Gradient overlay */}
-                <div className="absolute top-0 w-full h-32 bg-gradient-to-b from-[#13a4ec]/10 to-transparent pointer-events-none" />
 
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className={`absolute top-4 right-4 transition-colors z-20 ${isDark ? 'text-slate-500 hover:text-white' : 'text-slate-400 hover:text-slate-600'
+                    className={`absolute top-5 right-5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDark
+                        ? 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white'
+                        : 'bg-black/5 hover:bg-black/10 text-slate-500 hover:text-slate-900'
                         }`}
                 >
-                    <span className="material-symbols-outlined">close</span>
+                    <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
 
-                <div className="pt-10 pb-8 px-8 w-full flex flex-col items-center relative z-10">
+                <div className="p-8">
                     {/* Header */}
-                    <div className="text-center mb-6">
-                        <h2 className={`text-2xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            Join Conversation
+                    <div className="text-center mb-8">
+                        <h2 className={`text-3xl font-black tracking-tight mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            Welcome! 👋
                         </h2>
-                        <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            Customize how you appear to others
+                        <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Set up your profile to join the conversation
                         </p>
                     </div>
 
-                    {/* Avatar preview */}
-                    <div
-                        className="relative group cursor-pointer mb-8"
-                        onClick={onAvatarClick}
-                    >
-                        <div className={`w-32 h-32 rounded-full border-[6px] shadow-xl bg-gradient-to-br from-[#13a4ec] to-cyan-400 flex items-center justify-center overflow-hidden relative ${isDark ? 'border-[#233c48]' : 'border-slate-50'
-                            }`}>
-                            {/* Show custom avatar if available, otherwise show predefined */}
-                            {user?.customAvatarUrl ? (
-                                <div
-                                    className="w-full h-full bg-cover bg-center"
-                                    style={{ backgroundImage: `url(${user.customAvatarUrl})` }}
-                                />
-                            ) : selectedAvatar?.url ? (
-                                <div
-                                    className="w-full h-full bg-cover bg-center"
-                                    style={{ backgroundImage: `url(${selectedAvatar.url})` }}
-                                />
-                            ) : (
-                                <span className="text-white text-4xl font-bold">
-                                    {username.charAt(0).toUpperCase() || 'G'}
-                                </span>
-                            )}
-                            <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                <span className="material-symbols-outlined text-white text-3xl">edit</span>
-                            </div>
-                        </div>
-                        <button className={`absolute bottom-1 right-1 bg-[#13a4ec] text-white rounded-full p-2.5 shadow-md border-4 hover:bg-sky-500 transition-colors group-hover:scale-110 ${isDark ? 'border-[#182830]' : 'border-white'
-                            }`}>
-                            <span className="material-symbols-outlined text-[18px] leading-none">edit</span>
-                        </button>
-                    </div>
-
-                    {/* Username input */}
-                    <div className="w-full space-y-5">
-                        <div className="space-y-1.5">
-                            <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'
-                                }`}>
-                                Display Name
-                            </label>
-                            <div className="relative group focus-within:text-[#13a4ec]">
-                                <div className={`absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-[#13a4ec] transition-colors ${isDark ? 'text-slate-500' : 'text-slate-400'
-                                    }`}>
-                                    <span className="material-symbols-outlined text-[22px]">person</span>
-                                </div>
-                                <input
-                                    type="text"
-                                    value={username}
-                                    onChange={(e) => {
-                                        setUsername(e.target.value);
-                                        setError('');
-                                    }}
-                                    placeholder="Enter username"
-                                    maxLength={20}
-                                    className={`w-full border rounded-xl py-3.5 pl-12 pr-4 font-semibold focus:outline-none focus:ring-2 focus:ring-[#13a4ec]/20 focus:border-[#13a4ec] transition-all shadow-sm ${isDark
-                                        ? 'bg-[#101c22] border-[#233c48] text-white placeholder:text-slate-500'
-                                        : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400'
-                                        }`}
-                                />
-                            </div>
-                            {error && (
-                                <p className="text-red-500 text-xs ml-1">{error}</p>
-                            )}
-                        </div>
-
-                        {/* Submit button */}
-                        <button
-                            onClick={handleSubmit}
-                            disabled={isSubmitting || !username.trim()}
-                            className="w-full bg-[#13a4ec] hover:bg-sky-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-[#13a4ec]/25 transition-all hover:translate-y-[-1px] active:translate-y-[1px] flex items-center justify-center gap-2 group/btn disabled:opacity-50 disabled:cursor-not-allowed"
+                    {/* Avatar Section */}
+                    <div className="mb-8">
+                        <label className={`block text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Your Avatar
+                        </label>
+                        <div
+                            onClick={onAvatarClick}
+                            className={`relative w-full rounded-xl p-4 cursor-pointer transition-all group ${isDark
+                                ? 'bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#13a4ec]/50'
+                                : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 hover:border-[#13a4ec]/50'
+                                }`}
                         >
-                            <span>{isSubmitting ? 'Saving...' : 'Enter Chat'}</span>
-                            <span className="material-symbols-outlined group-hover/btn:translate-x-1 transition-transform">
-                                arrow_forward
-                            </span>
-                        </button>
+                            <div className="flex items-center gap-4">
+                                {/* Avatar Preview */}
+                                <div className="relative">
+                                    <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#13a4ec]/20 group-hover:ring-[#13a4ec]/50 transition-all">
+                                        {user?.customAvatarUrl ? (
+                                            <div
+                                                className="w-full h-full bg-cover bg-center"
+                                                style={{ backgroundImage: `url(${user.customAvatarUrl})` }}
+                                            />
+                                        ) : selectedAvatar?.url ? (
+                                            <div
+                                                className="w-full h-full bg-cover bg-center"
+                                                style={{ backgroundImage: `url(${selectedAvatar.url})` }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-[#13a4ec] to-cyan-400 flex items-center justify-center">
+                                                <span className="text-white text-2xl font-bold">
+                                                    {username.charAt(0).toUpperCase() || 'G'}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Text */}
+                                <div className="flex-1">
+                                    <p className={`text-sm font-semibold mb-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                        Click to change
+                                    </p>
+                                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        Choose from presets or upload custom
+                                    </p>
+                                </div>
+
+                                {/* Arrow Icon */}
+                                <div className={`transition-transform group-hover:translate-x-1 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                                    <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* No registration note */}
-                    <div className={`mt-6 flex items-center gap-2 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        <span className="material-symbols-outlined text-[16px]">verified_user</span>
-                        <span>No registration required</span>
+                    {/* Username Input */}
+                    <div className="mb-6">
+                        <label className={`block text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Display Name
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(e) => {
+                                    setUsername(e.target.value);
+                                    setError('');
+                                }}
+                                placeholder="Enter your name"
+                                maxLength={20}
+                                className={`w-full px-4 py-3.5 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-[#13a4ec]/50 transition-all ${isDark
+                                    ? 'bg-white/5 border border-white/10 text-white placeholder:text-slate-600 focus:bg-white/10'
+                                    : 'bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white'
+                                    }`}
+                            />
+                        </div>
+                        {error && (
+                            <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]">error</span>
+                                {error}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Enter Button */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || !username.trim()}
+                        className="w-full bg-gradient-to-r from-[#13a4ec] to-sky-500 hover:from-sky-500 hover:to-[#13a4ec] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-[#13a4ec]/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                        <span>{isSubmitting ? 'Joining...' : 'Enter Chat'}</span>
+                        <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                    </button>
+
+                    {/* Footer */}
+                    <div className={`mt-6 flex items-center justify-center gap-2 text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <span className="material-symbols-outlined text-[14px]">lock</span>
+                        <span>No registration required • Anonymous chat</span>
                     </div>
                 </div>
             </div>

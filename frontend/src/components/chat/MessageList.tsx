@@ -12,22 +12,45 @@ export default function MessageList() {
     const isDark = settings.theme === 'dark';
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const lastMessageIdRef = useRef<string | null>(null);
-    const messageCountRef = useRef<number>(0);
+    const isInitialMount = useRef(true);
+    const prevMessageCountRef = useRef(0);
 
-    // Auto-scroll to bottom ONLY when new messages are added (not on reaction updates)
+    // IMMEDIATE scroll to bottom on initial mount - no delay
     useEffect(() => {
-        const currentLastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null;
-        const currentMessageCount = messages.length;
+        if (isInitialMount.current && messages.length > 0) {
+            // Use instant scroll on mount
+            messagesEndRef.current?.scrollIntoView({ behavior: 'instant' } as any);
+            isInitialMount.current = false;
+        }
+    }, [messages.length]);
 
-        // Only scroll if a new message was added (count increased and last message ID changed)
-        if (currentMessageCount > messageCountRef.current && currentLastMessageId !== lastMessageIdRef.current) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Auto-scroll to bottom for new messages (INSTANT, not smooth)
+    useEffect(() => {
+        // Skip if this is initial mount (handled above)
+        if (isInitialMount.current) return;
+
+        const currentCount = messages.length;
+        const prevCount = prevMessageCountRef.current;
+
+        // Only proceed if message count actually increased
+        if (currentCount <= prevCount) {
+            prevMessageCountRef.current = currentCount;
+            return;
         }
 
-        // Update refs for next comparison
-        lastMessageIdRef.current = currentLastMessageId;
-        messageCountRef.current = currentMessageCount;
+        // Check if user is near bottom (within 150px)
+        const isNearBottom = () => {
+            if (!containerRef.current) return true;
+            const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+            return scrollHeight - scrollTop - clientHeight < 150;
+        };
+
+        // INSTANT scroll if user is at bottom - no flickering
+        if (isNearBottom()) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'instant' } as any);
+        }
+
+        prevMessageCountRef.current = currentCount;
     }, [messages]);
 
     // Group messages by date

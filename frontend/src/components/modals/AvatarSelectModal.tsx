@@ -7,300 +7,311 @@ import { useState, useRef } from 'react';
 interface AvatarSelectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onBack: () => void;
     avatars: Avatar[];
     selectedAvatarId: number;
     onSelect: (avatarId: number) => void;
+    onSubmit: (username: string, avatarId: number) => Promise<void>;
 }
 
 export default function AvatarSelectModal({
     isOpen,
     onClose,
-    onBack,
     avatars,
     selectedAvatarId,
     onSelect,
+    onSubmit,
 }: AvatarSelectModalProps) {
     const { settings, user, uploadAvatar, deleteAvatar } = useUser();
     const isDark = settings.theme === 'dark';
 
-    const [uploadingFile, setUploadingFile] = useState<File | null>(null);
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [username, setUsername] = useState(user?.username || '');
+    const [currentIndex, setCurrentIndex] = useState(
+        user?.customAvatarUrl ? 0 : avatars.findIndex(a => a.id === selectedAvatarId) || 0
+    );
     const [isUploading, setIsUploading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!isOpen) return null;
 
-    const handleConfirm = () => {
-        onBack();
+    // Type for carousel items (includes custom avatar)
+    type CarouselAvatar = Avatar & { isCustom?: boolean };
+
+    // Include custom avatar in the carousel
+    const allAvatars: CarouselAvatar[] = user?.customAvatarUrl
+        ? [{ id: -1, name: 'Custom', url: user.customAvatarUrl, isCustom: true }, ...avatars]
+        : avatars;
+
+    const currentAvatar = allAvatars[currentIndex];
+    const prevAvatar = allAvatars[(currentIndex - 1 + allAvatars.length) % allAvatars.length];
+    const nextAvatar = allAvatars[(currentIndex + 1) % allAvatars.length];
+
+    const handlePrev = () => {
+        const newIndex = (currentIndex - 1 + allAvatars.length) % allAvatars.length;
+        setCurrentIndex(newIndex);
+        const newAvatar = allAvatars[newIndex];
+        if (!newAvatar.isCustom) {
+            onSelect(newAvatar.id);
+        }
     };
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleNext = () => {
+        const newIndex = (currentIndex + 1) % allAvatars.length;
+        setCurrentIndex(newIndex);
+        const newAvatar = allAvatars[newIndex];
+        if (!newAvatar.isCustom) {
+            onSelect(newAvatar.id);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!username.trim() || username.length < 3) {
+            setError('Username must be at least 3 characters');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            // If user has custom avatar but selected a predefined one, delete custom avatar
+            if (user?.customAvatarUrl && !currentAvatar.isCustom) {
+                await deleteAvatar();
+            }
+
+            const avatarIdToSubmit = currentAvatar.isCustom ? selectedAvatarId : currentAvatar.id;
+            if (!currentAvatar.isCustom) {
+                onSelect(currentAvatar.id);
+            }
+            await onSubmit(username.trim(), avatarIdToSubmit);
+            onClose();
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to save profile';
+            setError(errorMessage);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Reset states
-        setUploadError(null);
+        setError(null);
 
-        // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            setUploadError('Only JPG, PNG, and WebP images are allowed');
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            setError('Only JPG, PNG, WebP allowed');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setError('Max 5MB');
             return;
         }
 
-        // Validate file size (5MB)
-        const maxSize = 5 * 1024 * 1024;
-        if (file.size > maxSize) {
-            setUploadError('File too large. Maximum size is 5MB');
-            return;
+        setIsUploading(true);
+
+        try {
+            await uploadAvatar(file);
+            setIsUploading(false);
+            setCurrentIndex(0); // Move to custom avatar
+        } catch (error: any) {
+            setError(error.message || 'Upload failed');
+            setIsUploading(false);
         }
 
-        // Create preview
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setUploadingFile(file);
-
-        // Reset file input
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
     };
 
-    const handleUpload = async () => {
-        if (!uploadingFile) return;
-
-        setIsUploading(true);
-        setUploadProgress(0);
-        setUploadError(null);
-
-        try {
-            // Simulate progress (since we don't have real progress from fetch)
-            const progressInterval = setInterval(() => {
-                setUploadProgress(prev => Math.min(prev + 10, 90));
-            }, 200);
-
-            await uploadAvatar(uploadingFile);
-
-            clearInterval(progressInterval);
-            setUploadProgress(100);
-
-            // Clear upload state
-            setTimeout(() => {
-                setUploadingFile(null);
-                setPreviewUrl(null);
-                setIsUploading(false);
-                setUploadProgress(0);
-            }, 500);
-        } catch (error: any) {
-            setUploadError(error.message || 'Upload failed');
-            setIsUploading(false);
-        }
-    };
-
-    const handleCancelUpload = () => {
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-        }
-        setUploadingFile(null);
-        setPreviewUrl(null);
-        setUploadError(null);
-        setUploadProgress(0);
-    };
-
-    const handleDeleteCustomAvatar = async () => {
+    const handleDeleteCustom = async () => {
         try {
             await deleteAvatar();
+            setCurrentIndex(0); // Move to first predefined avatar
         } catch (error: any) {
-            setUploadError(error.message || 'Failed to delete avatar');
+            setError(error.message || 'Failed to delete');
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
-            <div className={`rounded-3xl shadow-2xl w-full max-w-[480px] max-h-[85vh] overflow-hidden relative flex flex-col ${isDark
-                ? 'bg-[#182830] border border-[#233c48]'
-                : 'bg-white border border-slate-100'
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+            <div className={`rounded-3xl w-full max-w-[540px] overflow-hidden relative ${isDark
+                ? 'bg-gradient-to-br from-[#1a2332] to-[#0f1419]'
+                : 'bg-gradient-to-br from-white to-slate-50'
                 }`}>
-                {/* Header with back button */}
-                <div className="w-full flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
-                    <button
-                        onClick={onBack}
-                        className={`flex items-center gap-1 transition-colors text-sm ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-700'
-                            }`}
-                    >
-                        <span className="material-symbols-outlined text-lg">arrow_back</span>
-                        <span>Back</span>
-                    </button>
-                    <button
-                        onClick={onClose}
-                        className={`transition-colors ${isDark ? 'text-slate-500 hover:text-white' : 'text-slate-400 hover:text-slate-600'
-                            }`}
-                    >
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
 
-                {/* Title */}
-                <div className="text-center px-6 pb-4 shrink-0">
-                    <h2 className={`text-xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        Select Avatar
-                    </h2>
-                    <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        Choose a predefined look or upload your own
-                    </p>
-                </div>
+                {/* Close button */}
+                <button
+                    onClick={onClose}
+                    className={`absolute top-5 right-5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDark
+                        ? 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white'
+                        : 'bg-black/5 hover:bg-black/10 text-slate-500 hover:text-slate-900'
+                        }`}
+                >
+                    <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
 
-                {/* Upload preview */}
-                {uploadingFile && previewUrl && (
-                    <div className={`mx-6 mb-4 p-3 rounded-lg border ${isDark ? 'bg-[#233c48]/30 border-[#233c48]' : 'bg-slate-50 border-slate-200'}`}>
-                        <div className="flex items-center gap-3">
-                            <img src={previewUrl} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
-                            <div className="flex-1 min-w-0">
-                                <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                                    {uploadingFile.name}
-                                </p>
-                                <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                    {(uploadingFile.size / 1024).toFixed(1)} KB
-                                </p>
-                                {isUploading && (
-                                    <div className="mt-2">
-                                        <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-[#182830]' : 'bg-slate-200'}`}>
-                                            <div
-                                                className="h-full bg-[#13a4ec] transition-all duration-300"
-                                                style={{ width: `${uploadProgress}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            {!isUploading && (
-                                <button
-                                    onClick={handleCancelUpload}
-                                    className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-[#182830] text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
-                                >
-                                    <span className="material-symbols-outlined text-sm">close</span>
-                                </button>
-                            )}
-                        </div>
-                        {!isUploading && (
-                            <button
-                                onClick={handleUpload}
-                                className="w-full mt-3 bg-[#13a4ec] hover:bg-sky-500 text-white font-medium py-2 rounded-lg transition-colors text-sm"
-                            >
-                                Upload & Use
-                            </button>
-                        )}
+                <div className="p-8 md:p-10 flex flex-col items-center">
+                    {/* Title */}
+                    <div className="text-center mb-8">
+                        <h2 className={`text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            Welcome! 👋
+                        </h2>
+                        <p className={`text-lg mt-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Set up your profile to get started
+                        </p>
                     </div>
-                )}
 
-                {/* Error message */}
-                {uploadError && (
-                    <div className="mx-6 mb-4 text-xs text-red-500 px-3 py-2 bg-red-500/10 rounded-lg border border-red-500/20">
-                        {uploadError}
+                    {/* Username Input */}
+                    <div className="w-full mb-8">
+                        <label className={`block text-sm font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Display Name
+                        </label>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => {
+                                setUsername(e.target.value);
+                                setError(null);
+                            }}
+                            placeholder="Enter your name"
+                            maxLength={20}
+                            className={`w-full px-4 py-3.5 rounded-xl font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-[#13a4ec]/50 transition-all ${isDark
+                                ? 'bg-white/5 border border-white/10 text-white placeholder:text-slate-600 focus:bg-white/10'
+                                : 'bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white'
+                                }`}
+                        />
                     </div>
-                )}
 
-                {/* Scrollable Avatar grid */}
-                <div className={`flex-1 overflow-y-auto px-6 pb-4 ${isDark ? 'scrollbar-dark' : 'scrollbar-light'
-                    }`}>
-                    <div className="grid grid-cols-4 gap-3">
-                        {/* Custom avatar if exists */}
-                        {user?.customAvatarUrl && (
-                            <div className="aspect-square relative">
-                                <button
-                                    onClick={() => {/* Custom avatar is always active */ }}
-                                    className={`w-full h-full relative rounded-full overflow-hidden border-[3px] transition-all shadow-md border-[#13a4ec] ring-2 ring-[#13a4ec]/30 scale-105`}
-                                >
+                    {/* Carousel */}
+                    <div className="relative w-full flex items-center justify-center gap-4 mb-8">
+                        {/* Left Arrow */}
+                        <button
+                            onClick={handlePrev}
+                            className="w-12 h-12 rounded-full bg-gradient-to-br from-[#13a4ec] to-sky-500 flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all shadow-lg shadow-[#13a4ec]/30"
+                        >
+                            <span className="material-symbols-outlined text-2xl font-bold">chevron_left</span>
+                        </button>
+
+                        {/* Avatars */}
+                        <div className="flex items-center gap-4">
+                            {/* Prev (faded) */}
+                            <div className="hidden sm:block w-20 h-20 rounded-full opacity-20 grayscale transform scale-75 border-2 border-slate-700/50 overflow-hidden">
+                                {prevAvatar.url ? (
                                     <div
                                         className="w-full h-full bg-cover bg-center"
-                                        style={{ backgroundImage: `url(${user.customAvatarUrl})` }}
-                                    />
-                                    <div className="absolute bottom-0 right-0 bg-[#13a4ec] text-white rounded-full p-0.5 border-2 border-white">
-                                        <span className="material-symbols-outlined text-xs">check</span>
-                                    </div>
-                                </button>
-                                {/* Delete button */}
-                                <button
-                                    onClick={handleDeleteCustomAvatar}
-                                    className="absolute -top-1 -right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md z-10"
-                                    title="Remove custom avatar"
-                                >
-                                    <span className="material-symbols-outlined text-xs">close</span>
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Predefined avatars */}
-                        {avatars.map((avatar) => (
-                            <button
-                                key={avatar.id}
-                                onClick={() => onSelect(avatar.id)}
-                                disabled={!!user?.customAvatarUrl}
-                                className={`relative aspect-square rounded-full overflow-hidden border-[3px] transition-all hover:scale-105 shadow-md ${!user?.customAvatarUrl && selectedAvatarId === avatar.id
-                                    ? 'border-[#13a4ec] ring-2 ring-[#13a4ec]/30 scale-105'
-                                    : isDark
-                                        ? 'border-[#233c48] hover:border-[#375a6b]'
-                                        : 'border-slate-200 hover:border-slate-300'
-                                    } ${user?.customAvatarUrl ? 'opacity-50' : ''}`}
-                            >
-                                {avatar.url ? (
-                                    <div
-                                        className="w-full h-full bg-cover bg-center bg-gradient-to-br from-[#13a4ec] to-cyan-400"
-                                        style={{ backgroundImage: `url(${avatar.url})` }}
+                                        style={{ backgroundImage: `url(${prevAvatar.url})` }}
                                     />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-[#13a4ec] to-cyan-400 flex items-center justify-center">
-                                        <span className="text-white text-lg font-bold">{avatar.id}</span>
-                                    </div>
+                                    <div className="w-full h-full bg-gradient-to-br from-[#13a4ec] to-cyan-400" />
                                 )}
-                                {!user?.customAvatarUrl && selectedAvatarId === avatar.id && (
-                                    <div className="absolute bottom-0 right-0 bg-[#13a4ec] text-white rounded-full p-0.5 border-2 border-white">
-                                        <span className="material-symbols-outlined text-xs">check</span>
-                                    </div>
+                            </div>
+
+                            {/* Current (large) */}
+                            <div className="relative group">
+                                <div className={`absolute -inset-4 bg-gradient-to-tr from-[#13a4ec]/40 via-sky-500/40 to-cyan-400/40 rounded-full blur-xl opacity-60 group-hover:opacity-100 transition-opacity`} />
+                                <div className={`relative w-32 h-32 md:w-40 md:h-40 rounded-full p-2 ring-4 overflow-hidden ${isDark ? 'ring-slate-800 bg-slate-800' : 'ring-slate-200 bg-slate-200'}`}
+                                    style={{ boxShadow: '0 0 30px rgba(19, 164, 236, 0.3)' }}
+                                >
+                                    {currentAvatar.url ? (
+                                        <div
+                                            className="w-full h-full rounded-full bg-cover bg-center"
+                                            style={{ backgroundImage: `url(${currentAvatar.url})` }}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full rounded-full bg-gradient-to-br from-[#13a4ec] to-cyan-400 flex items-center justify-center">
+                                            <span className="text-white text-5xl font-bold">{currentAvatar.id}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Checkmark */}
+                                <div className="absolute -bottom-1 right-2 bg-[#13a4ec] text-white w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-xl animate-bounce">
+                                    <span className="material-symbols-outlined text-lg font-bold">check</span>
+                                </div>
+                                {/* Delete button for custom */}
+                                {currentAvatar.isCustom && (
+                                    <button
+                                        onClick={handleDeleteCustom}
+                                        className="absolute top-1 right-2 p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg transition-all"
+                                        title="Remove custom avatar"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                                    </button>
                                 )}
-                            </button>
-                        ))}
+                            </div>
+
+                            {/* Next (faded) */}
+                            <div className="hidden sm:block w-20 h-20 rounded-full opacity-20 grayscale transform scale-75 border-2 border-slate-700/50 overflow-hidden">
+                                {nextAvatar.url ? (
+                                    <div
+                                        className="w-full h-full bg-cover bg-center"
+                                        style={{ backgroundImage: `url(${nextAvatar.url})` }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-[#13a4ec] to-cyan-400" />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Right Arrow */}
+                        <button
+                            onClick={handleNext}
+                            className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all shadow-lg shadow-pink-500/30"
+                        >
+                            <span className="material-symbols-outlined text-2xl font-bold">chevron_right</span>
+                        </button>
                     </div>
-                </div>
 
-                {/* Footer with buttons */}
-                <div className={`px-6 py-4 shrink-0 border-t ${isDark ? 'border-[#233c48]' : 'border-slate-100'}`}>
-                    {/* Confirm button */}
-                    <button
-                        onClick={handleConfirm}
-                        className="w-full bg-[#13a4ec] hover:bg-sky-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-[#13a4ec]/25 transition-all flex items-center justify-center gap-2"
-                    >
-                        <span>Confirm</span>
-                        <span className="material-symbols-outlined text-lg">check</span>
-                    </button>
-
-                    {/* Hidden file input */}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                    />
-
-                    {/* Upload option - enabled */}
+                    {/* Upload Button */}
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
-                        className={`mt-3 w-full flex items-center justify-center gap-2 text-xs transition-colors ${isUploading
+                        className={`mb-6 px-6 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${isUploading
                             ? 'opacity-50 cursor-not-allowed'
                             : isDark
-                                ? 'text-[#13a4ec] hover:text-sky-400'
-                                : 'text-[#13a4ec] hover:text-sky-600'
+                                ? 'bg-white/5 text-[#13a4ec] hover:bg-white/10'
+                                : 'bg-slate-100 text-[#13a4ec] hover:bg-slate-200'
                             }`}
                     >
-                        <span className="material-symbols-outlined text-sm">upload</span>
-                        <span>Upload your own image</span>
+                        <span className="material-symbols-outlined text-[18px]">
+                            {isUploading ? 'hourglass_empty' : 'add_a_photo'}
+                        </span>
+                        <span>{isUploading ? 'Uploading...' : 'Upload Custom Image'}</span>
                     </button>
+
+                    {/* Error */}
+                    {error && (
+                        <div className="text-sm text-red-400 px-4 py-2 bg-red-500/10 rounded-lg mb-4 w-full text-center flex items-center justify-center gap-2">
+                            <span className="material-symbols-outlined text-[16px]">error</span>
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || !username.trim()}
+                        className="w-full bg-gradient-to-r from-[#ff7e21] to-[#ff8f40] hover:from-[#ff8f40] hover:to-[#ff7e21] text-white text-xl font-black py-5 rounded-3xl shadow-[0_8px_0_#9a4508] transition-all hover:translate-y-[2px] hover:shadow-[0_6px_0_#9a4508] active:translate-y-[6px] active:shadow-none flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-[0_8px_0_#9a4508]"
+                    >
+                        <span>{isSubmitting ? 'Saving...' : "Let's Go!"}</span>
+                        <span className="material-symbols-outlined text-2xl font-bold">rocket_launch</span>
+                    </button>
+
+                    {/* Footer */}
+                    <div className={`mt-6 flex items-center justify-center gap-2 text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <span className="material-symbols-outlined text-[14px]">lock</span>
+                        <span>No registration required • Anonymous chat</span>
+                    </div>
                 </div>
+
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                />
             </div>
         </div>
     );

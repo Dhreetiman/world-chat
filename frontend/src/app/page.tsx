@@ -9,7 +9,6 @@ import ChatHeader from '@/components/layout/ChatHeader';
 import MobileNav from '@/components/layout/MobileNav';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
-import JoinModal from '@/components/modals/JoinModal';
 import AvatarSelectModal from '@/components/modals/AvatarSelectModal';
 import SettingsPanel from '@/components/modals/SettingsPanel';
 import { userApi, messagesApi, roomApi } from '@/lib/api';
@@ -18,8 +17,7 @@ import { Avatar, Message } from '@/types';
 function ChatApp() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [joinModalOpen, setJoinModalOpen] = useState(false);
-  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [selectedAvatarId, setSelectedAvatarId] = useState(1);
 
@@ -180,37 +178,19 @@ function ChatApp() {
           <MessageList />
 
           <MessageInput
-            onUsernameClick={() => setJoinModalOpen(true)}
+            onUsernameClick={() => setProfileModalOpen(true)}
           />
         </main>
       </div>
 
       {/* Modals */}
-      <JoinModal
-        isOpen={joinModalOpen}
-        onClose={() => setJoinModalOpen(false)}
-        onAvatarClick={() => {
-          setJoinModalOpen(false);
-          setAvatarModalOpen(true);
-        }}
-        avatars={avatars}
-        selectedAvatarId={selectedAvatarId}
-        onSubmit={handleUsernameSubmit}
-      />
-
       <AvatarSelectModal
-        isOpen={avatarModalOpen}
-        onClose={() => {
-          setAvatarModalOpen(false);
-          setJoinModalOpen(false);
-        }}
-        onBack={() => {
-          setAvatarModalOpen(false);
-          setJoinModalOpen(true);
-        }}
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
         avatars={avatars}
         selectedAvatarId={selectedAvatarId}
         onSelect={setSelectedAvatarId}
+        onSubmit={handleUsernameSubmit}
       />
 
       <SettingsPanel
