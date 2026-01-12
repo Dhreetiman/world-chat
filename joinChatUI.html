@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Openwave - Setup</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d7ff2",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#16202a",
+                        "border-dark": "#223649",
+                        "text-secondary": "#90adcb",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
+    <div class="relative flex h-screen w-full overflow-hidden">
+        <div class="flex w-full h-full relative z-0">
+            <aside class="hidden md:flex w-72 flex-col border-r border-border-dark bg-[#101a23]">
+                <div class="p-5 border-b border-border-dark/50">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-lg size-10 shadow-inner"
+                            data-alt="Abstract blue wave pattern"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDR_3Z2hU7NRxyVaITZ0sSRIg4_A4U2fFZzy054mrtoKnuDn22G88xddwfbg4tB20B-2f02jKZGX31E8CvbvhgotArUMuKycUIsehoHZArvodoEPANdTcuEcugM68i143yDzT3Tsj-wN8DlJoyy8X3pc7_K6P0pxb385fZTmBKG9yHmMZq7QSoGPO5FMaefD1yIfNVzVgOUhNNWa1sN939LCYR1mnzx-STFV7ocW1s0LC_j0THM7b15vUyIv0RDxHIbxUQ6AfyGi0q0");'>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-white text-lg font-bold leading-none tracking-tight">Openwave</h1>
+                            <p class="text-text-secondary text-xs font-medium">v2.4.0-beta</p>
+                        </div>
+                    </div>
+                </div>
+                <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                    <div class="px-3 py-2">
+                        <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Channels</p>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#223649]/60 text-white group transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-primary text-[20px]">tag</span>
+                        <span class="text-sm font-medium">general</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary hover:bg-[#223649]/30 hover:text-white transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-[20px]">tag</span>
+                        <span class="text-sm font-medium">react-help</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary hover:bg-[#223649]/30 hover:text-white transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-[20px]">tag</span>
+                        <span class="text-sm font-medium">showcase</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary hover:bg-[#223649]/30 hover:text-white transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-[20px]">tag</span>
+                        <span class="text-sm font-medium">random</span>
+                    </a>
+                    <div class="px-3 py-4 mt-2">
+                        <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Direct Messages
+                        </p>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary hover:bg-[#223649]/30 hover:text-white transition-colors"
+                        href="#">
+                        <div class="size-5 rounded-full bg-cover bg-center" data-alt="User avatar profile picture"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDHU7ONs235dGnrb8DLu-1ggfUnLViPxYJrhuKZMoSkN_5bi7KK45dhKEkTVrj7MgKxWHRdUFol7subimljxIRdWJ13Fs1PF_xcv0etecXKeQLqT6vrhuT9rDgIdZeF8u3YP11hSeVRBnRO-UT678iFX1zuSlrImhw3PL7kAT5ZA5BRvQOPFLStsnfozNUr7kJY32EdjOGN1jkOiHtHIN_G_f9jFywvyyweCEgQA-S4NAEy-gj7unxOdwQf0jcWdzW0llQx_TxMrfuk");'>
+                        </div>
+                        <span class="text-sm font-medium">alex_dev</span>
+                    </a>
+                </nav>
+                <div class="p-4 border-t border-border-dark/50 bg-[#0c141c]">
+                    <div class="flex items-center justify-between">
+                        <div class="h-2 w-24 bg-border-dark rounded animate-pulse"></div>
+                        <div class="h-4 w-4 bg-border-dark rounded-full"></div>
+                    </div>
+                </div>
+            </aside>
+            <main class="flex-1 flex flex-col h-full bg-background-dark relative">
+                <header class="h-16 border-b border-border-dark flex items-center justify-between px-6 bg-[#101a23]/95">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-text-secondary">tag</span>
+                        <h2 class="font-bold text-white">general</h2>
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] bg-border-dark text-text-secondary font-mono">public</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-text-secondary">
+                        <span class="material-symbols-outlined cursor-pointer hover:text-white">search</span>
+                        <span class="material-symbols-outlined cursor-pointer hover:text-white">info</span>
+                    </div>
+                </header>
+                <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="h-px bg-border-dark flex-1"></div>
+                        <span class="text-xs font-medium text-text-secondary">Today</span>
+                        <div class="h-px bg-border-dark flex-1"></div>
+                    </div>
+                    <div class="flex items-start gap-4 group">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-lg size-10 shrink-0 shadow-sm"
+                            data-alt="Avatar of user sarah_codes"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA_7cXvHJ2nX1b7IlF9hhniCTm1BOYahrFTd-PeaYmeyMwuB9TjdMyngbfxK_6d-weFcn0at0gkSDqYkQDOYuDiJkENM5KTKF_dgRxm1wY2lUk0P-eZyWLeSOprtX-Cq4U-Urn3NJxwBmwuC9AaXretgRlTHKMeEKC723zJRgMamgJ97f9wOrv37STBPwsayoDtimHTEAMpuRFIZrMXeLdBnU7tyin8M0jEapxTujvEuER2VihuRXlNfWK50YuBivSV2pFj17Pa5A7q");'>
+                        </div>
+                        <div class="flex flex-col gap-1 min-w-0">
+                            <div class="flex items-baseline gap-2">
+                                <span class="font-bold text-white hover:underline cursor-pointer">sarah_codes</span>
+                                <span class="text-[11px] text-text-secondary">10:42 AM</span>
+                            </div>
+                            <p class="text-gray-300 leading-relaxed text-[15px]">
+                                Has anyone tried the new experimental concurrent features in the latest build? The
+                                suspense boundaries seem much more stable now.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 group">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-lg size-10 shrink-0 shadow-sm"
+                            data-alt="Avatar of user mike_builds"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAWOZewe8d6O16VNuzbxPLmnp7VWDUIGYwcO2RlpQrp85baMXIpBlGpk68jKl7OT-4aVn7che9TIeRNX4h-8QbhK0AXM6B2BCw-bi5kGBjOSpJiALeTy8LlFvjEEB3SWlyzIibIgm6eXqgMhRhwzXjT-vZ8_QW2b4sIrhtgTpiEBfAdxNPlPu-LStyzPp5amd7IJi3eL3hdcTqTqighZNinkRdHSCghHnXXx02Eh7CAfZ2rYBlWJCs3BFkTXHargQnMPh0NjSH5niRe");'>
+                        </div>
+                        <div class="flex flex-col gap-1 min-w-0">
+                            <div class="flex items-baseline gap-2">
+                                <span class="font-bold text-white hover:underline cursor-pointer">mike_builds</span>
+                                <span class="text-[11px] text-text-secondary">10:45 AM</span>
+                            </div>
+                            <p class="text-gray-300 leading-relaxed text-[15px]">
+                                Yeah, I just migrated the dashboard component. <code
+                                    class="bg-[#1e2d3d] px-1.5 py-0.5 rounded text-primary font-mono text-sm">useTransition</code>
+                                is a game changer for the search filtering UX.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center py-2">
+                        <div
+                            class="bg-[#1e2d3d]/50 px-4 py-1.5 rounded-full border border-border-dark/50 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-green-500 text-sm">login</span>
+                            <span class="text-xs text-text-secondary"><strong>new_user_88</strong> joined the
+                                channel</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 group">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-lg size-10 shrink-0 shadow-sm"
+                            data-alt="Avatar of user dev_bot"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAtWRseJBbxgtsutJ01F_7smsTd22oNbOWQyEOIAz2Kj80i-9DE_prHWZawy_EzU1DFB0tBmkdIWI2GZasZ9hSb8RAU-g4uO2xXLFCTYV3B_IdkfD-XEducgCTRldHQN2Ck79aj1JpNW9K-Rhlqxg-h1E68tjcrMlLXNC5Qqdm1pNMxq7GRLBwTmwfRD632yd6fMF8mPvmlHLcn7IYEuVh3494ew9B0qvXxcoWY-RZ9b2wz1PQp_chEYlSAoW-4i2bRsblsGfJ3IAFh");'>
+                        </div>
+                        <div class="flex flex-col gap-1 min-w-0">
+                            <div class="flex items-baseline gap-2">
+                                <span class="font-bold text-primary hover:underline cursor-pointer">dev_bot</span>
+                                <span
+                                    class="px-1.5 py-0.5 rounded bg-primary text-[10px] font-bold text-white uppercase tracking-wider">BOT</span>
+                                <span class="text-[11px] text-text-secondary">10:48 AM</span>
+                            </div>
+                            <div
+                                class="text-gray-300 leading-relaxed text-[15px] p-3 rounded-lg bg-[#1e2d3d] border border-border-dark inline-block max-w-2xl">
+                                <p class="mb-2">Deployed successfully to production environment.</p>
+                                <div class="flex items-center gap-3 text-sm font-mono text-text-secondary">
+                                    <span class="flex items-center gap-1"><span
+                                            class="w-2 h-2 rounded-full bg-green-500"></span> build: passing</span>
+                                    <span>hash: 8f3a2c</span>
+                                    <span>320ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 pb-6">
+                    <div
+                        class="bg-[#1e2d3d] rounded-xl flex items-end p-2 border border-border-dark focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+                        <button
+                            class="p-2 text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                            <span class="material-symbols-outlined">add_circle</span>
+                        </button>
+                        <textarea
+                            class="bg-transparent border-0 focus:ring-0 text-white w-full resize-none py-2.5 max-h-32 min-h-[44px] placeholder-text-secondary/50"
+                            placeholder="Message #general" rows="1"></textarea>
+                        <div class="flex items-center gap-1 pb-1">
+                            <button
+                                class="p-2 text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                                <span class="material-symbols-outlined text-[20px]">sentiment_satisfied</span>
+                            </button>
+                            <button
+                                class="p-2 text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                                <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div
+            class="absolute inset-0 z-50 bg-[#080d12]/60 backdrop-blur-[6px] flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div
+                class="w-full max-w-md bg-[#101922] rounded-2xl border border-primary/50 shadow-[0_0_40px_-10px_rgba(13,127,242,0.3)] relative overflow-hidden flex flex-col items-center text-center">
+                <div
+                    class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80">
+                </div>
+                <div class="p-8 w-full flex flex-col gap-6">
+                    <div class="flex flex-col items-center gap-3">
+                        <div
+                            class="size-14 rounded-xl bg-gradient-to-br from-primary to-[#054a91] flex items-center justify-center shadow-lg shadow-primary/20 mb-1">
+                            <span class="material-symbols-outlined text-white text-[32px]">fingerprint</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white tracking-tight">Set Identity</h2>
+                        <p class="text-text-secondary text-sm max-w-[280px]">
+                            Enter your alias and secure passcode to join the session.
+                        </p>
+                    </div>
+                    <div class="w-full bg-[#0c141c] p-1.5 rounded-xl border border-border-dark flex relative">
+                        <button
+                            class="flex-1 py-2.5 text-sm font-bold text-text-secondary hover:text-white transition-colors rounded-lg">Login</button>
+                        <button
+                            class="flex-1 py-2.5 text-sm font-bold text-white bg-primary rounded-lg shadow-lg shadow-primary/25 transition-all">Signup</button>
+                    </div>
+                    <div class="w-full flex flex-col gap-4">
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span class="font-mono text-primary font-bold text-lg">&gt;</span>
+                            </div>
+                            <input autofocus=""
+                                class="w-full bg-[#16202a] text-white font-mono placeholder-text-secondary/40 border-2 border-primary/40 rounded-xl py-3.5 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-lg tracking-tight"
+                                placeholder="enter_alias_" type="text" />
+                        </div>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span class="font-mono text-primary font-bold text-lg">&gt;</span>
+                            </div>
+                            <input
+                                class="w-full bg-[#16202a] text-white font-mono placeholder-text-secondary/40 border-2 border-primary/40 rounded-xl py-3.5 pl-10 pr-12 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-lg tracking-tight"
+                                placeholder="enter_passcode_" type="password" />
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <kbd
+                                    class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-sans font-bold text-text-secondary bg-[#223649] rounded border border-white/10 shadow-sm">RETURN</kbd>
+                            </div>
+                        </div>
+                        <button
+                            class="w-full bg-primary hover:bg-[#0b6ecc] text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 flex items-center justify-center gap-2 group/btn">
+                            <span>Join Chat</span>
+                            <span
+                                class="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-text-secondary/60 font-mono">
+                        By joining, you agree to the <a class="text-primary hover:underline underline-offset-2"
+                            href="#">Rules of Conduct</a>
+                    </p>
+                </div>
+                <div
+                    class="w-full h-1.5 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(13,127,242,0.05)_10px,rgba(13,127,242,0.05)_20px)] border-t border-white/5">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -3,7 +3,7 @@ import { Server } from 'socket.io';
 import app from './app';
 import prisma from './config/db';
 import { initializeSocketHandlers } from './socket';
-import { startAllJobs } from './jobs/messageCleanup';
+// import { startAllJobs } from './jobs/messageCleanup'; // Temporarily disabled - needs schema update
 
 // Load environment variables
 import 'dotenv/config';
@@ -38,17 +38,18 @@ const startServer = async () => {
         console.log('✅ Database connected successfully');
 
         // Start cleanup jobs
-        startAllJobs();
+        // startAllJobs(); // Temporarily disabled - needs schema update
 
         // Start listening
         server.listen(PORT, () => {
             console.log('');
             console.log('🌍 ================================================');
-            console.log('🌍   OPEN WORLD CHAT - Backend Server');
+            console.log('🌍   WORLD CHAT V2 - Backend Server');
             console.log('🌍 ================================================');
             console.log(`🚀 Server running on port ${PORT}`);
-            console.log(`📡 Socket.io ready for connections`);
+            console.log(`📡 Socket.io ready with JWT authentication`);
             console.log(`🔗 API: http://localhost:${PORT}/api`);
+            console.log(`🔐 Auth: http://localhost:${PORT}/api/auth`);
             console.log(`❤️  Health: http://localhost:${PORT}/api/health`);
             console.log('🌍 ================================================');
             console.log('');

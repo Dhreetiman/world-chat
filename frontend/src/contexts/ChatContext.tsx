@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useRef, ReactNode, RefObject } from 'react';
-import { Message, RoomInfo, Avatar } from '@/types';
+import { Message, MessageReaction, RoomInfo, Avatar } from '@/types';
 
 interface ChatContextType {
     messages: Message[];
@@ -14,7 +14,7 @@ interface ChatContextType {
     avatars: Avatar[];
     setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
     addMessage: (message: Message) => void;
-    updateMessageReactions: (messageId: string, reactions: Record<string, string[]>) => void;
+    updateMessageReactions: (messageId: string, emoji: string, action: 'added' | 'removed', userId: string, username?: string) => void;
     updateMessage: (messageId: string, updates: Partial<Message>) => void;
     markMessageDeleted: (messageId: string) => void;
     setReplyingTo: (message: Message | null) => void;
@@ -47,7 +47,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const focusInput = useCallback(() => {
-        // Use setTimeout to ensure the DOM has updated before focusing
         setTimeout(() => {
             inputRef.current?.focus();
         }, 0);
@@ -57,11 +56,50 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setMessages(prev => [...prev, message]);
     }, []);
 
-    const updateMessageReactions = useCallback((messageId: string, reactions: Record<string, string[]>) => {
+    const updateMessageReactions = useCallback((messageId: string, emoji: string, action: 'added' | 'removed', userId: string, username?: string) => {
         setMessages(prev =>
-            prev.map(msg =>
-                msg.id === messageId ? { ...msg, reactions } : msg
-            )
+            prev.map(msg => {
+                if (msg.id !== messageId) return msg;
+
+                const reactions = msg.reactions ? [...msg.reactions] : [];
+                const existingIndex = reactions.findIndex(r => r.emoji === emoji);
+
+                if (action === 'added') {
+                    if (existingIndex >= 0) {
+                        // Add user to existing reaction
+                        const existing = reactions[existingIndex];
+                        if (!existing.users.find(u => u.id === userId)) {
+                            reactions[existingIndex] = {
+                                ...existing,
+                                count: existing.count + 1,
+                                users: [...existing.users, { id: userId, username: username || '' }],
+                            };
+                        }
+                    } else {
+                        // Create new reaction
+                        reactions.push({
+                            emoji,
+                            count: 1,
+                            users: [{ id: userId, username: username || '' }],
+                        });
+                    }
+                } else if (action === 'removed' && existingIndex >= 0) {
+                    const existing = reactions[existingIndex];
+                    const newUsers = existing.users.filter(u => u.id !== userId);
+                    if (newUsers.length === 0) {
+                        // Remove reaction entirely
+                        reactions.splice(existingIndex, 1);
+                    } else {
+                        reactions[existingIndex] = {
+                            ...existing,
+                            count: newUsers.length,
+                            users: newUsers,
+                        };
+                    }
+                }
+
+                return { ...msg, reactions };
+            })
         );
     }, []);
 

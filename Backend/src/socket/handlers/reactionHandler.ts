@@ -1,46 +1,84 @@
 import { Server, Socket } from 'socket.io';
 import * as reactionService from '../../modules/reactions/reaction.service';
-import { getGuestIdFromSocket } from './userHandler';
 
 /**
- * Handle reaction events
+ * Handle reaction socket events
  */
 export const handleReactionEvents = (io: Server, socket: Socket) => {
     /**
-     * SEND_REACTION - Toggle reaction on a message
+     * ADD_REACTION - Add or toggle a reaction
      */
-    socket.on('SEND_REACTION', async (data: { messageId: string; emoji: string }) => {
+    socket.on('ADD_REACTION', async (data: { messageId: string; emoji: string }) => {
         try {
-            const guestId = getGuestIdFromSocket(socket.id);
+            const userId = socket.data.userId;
+            const username = socket.data.username;
 
-            if (!guestId) {
-                socket.emit('ERROR', { code: 'NOT_AUTHENTICATED', message: 'Please join the chat first' });
+            if (!userId || !data.messageId || !data.emoji) {
+                socket.emit('ERROR', { message: 'Invalid reaction data' });
                 return;
             }
 
-            const { messageId, emoji } = data;
+            const result = await reactionService.addReaction(data.messageId, userId, data.emoji);
 
-            if (!messageId || !emoji) {
-                socket.emit('ERROR', { code: 'INVALID_DATA', message: 'Message ID and emoji are required' });
-                return;
-            }
-
-            // Toggle reaction
-            const result = await reactionService.toggleReaction({
-                messageId,
-                guestId,
-                emoji,
-            });
-
-            // Broadcast updated reactions to all users
-            io.to('global-chat').emit('MESSAGE_REACTION_UPDATED', {
-                messageId: result.messageId,
-                reactions: result.reactions,
+            // Broadcast to all users in the room
+            io.emit('REACTION_UPDATED', {
+                messageId: data.messageId,
+                emoji: data.emoji,
+                action: result.action,
+                userId,
+                username,
             });
 
         } catch (error: any) {
-            console.error('SEND_REACTION error:', error);
-            socket.emit('ERROR', { code: 'REACTION_FAILED', message: error.message || 'Failed to toggle reaction' });
+            console.error('Socket ADD_REACTION error:', error);
+            socket.emit('ERROR', { message: error.message || 'Failed to add reaction' });
+        }
+    });
+
+    /**
+     * REMOVE_REACTION - Remove a reaction
+     */
+    socket.on('REMOVE_REACTION', async (data: { messageId: string; emoji: string }) => {
+        try {
+            const userId = socket.data.userId;
+
+            if (!userId || !data.messageId || !data.emoji) {
+                socket.emit('ERROR', { message: 'Invalid reaction data' });
+                return;
+            }
+
+            await reactionService.removeReaction(data.messageId, userId, data.emoji);
+
+            // Broadcast to all users
+            io.emit('REACTION_UPDATED', {
+                messageId: data.messageId,
+                emoji: data.emoji,
+                action: 'removed',
+                userId,
+            });
+
+        } catch (error: any) {
+            console.error('Socket REMOVE_REACTION error:', error);
+            socket.emit('ERROR', { message: error.message || 'Failed to remove reaction' });
+        }
+    });
+
+    /**
+     * GET_REACTIONS - Get all reactions for a message
+     */
+    socket.on('GET_REACTIONS', async (data: { messageId: string }) => {
+        try {
+            if (!data.messageId) {
+                socket.emit('ERROR', { message: 'Message ID required' });
+                return;
+            }
+
+            const reactions = await reactionService.getMessageReactions(data.messageId);
+            socket.emit('REACTIONS', { messageId: data.messageId, reactions });
+
+        } catch (error: any) {
+            console.error('Socket GET_REACTIONS error:', error);
+            socket.emit('ERROR', { message: error.message || 'Failed to get reactions' });
         }
     });
 };

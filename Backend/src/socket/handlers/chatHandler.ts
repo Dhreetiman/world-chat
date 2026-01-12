@@ -1,11 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import * as messageService from '../../modules/messages/message.service';
-import * as userService from '../../modules/users/user.service';
-import { getGuestIdFromSocket } from './userHandler';
-import { getAvatarById } from '../../utils/avatar';
 
 /**
- * Handle chat message events
+ * Handle chat-related socket events
  */
 export const handleChatEvents = (io: Server, socket: Socket) => {
     /**
@@ -13,6 +10,10 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
      */
     socket.on('SEND_MESSAGE', async (data: {
         content?: string;
+        codeSnippet?: string;
+        codeLanguage?: string;
+        codeFileName?: string;
+        isFormatted?: boolean;
         imageUrl?: string;
         fileUrl?: string;
         fileType?: string;
@@ -21,121 +22,104 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
         replyToMessageId?: string;
     }) => {
         try {
-            const guestId = getGuestIdFromSocket(socket.id);
+            const userId = socket.data.userId;
+            const username = socket.data.username;
 
-            if (!guestId) {
-                socket.emit('ERROR', { code: 'NOT_AUTHENTICATED', message: 'Please join the chat first' });
+            if (!userId) {
+                socket.emit('ERROR', { code: 'UNAUTHORIZED', message: 'User not authenticated' });
                 return;
             }
 
-            // Get user
-            const user = await userService.getGuestUser(guestId);
-
-            // Check if username is set
-            if (!userService.hasCustomUsername(user.username)) {
-                socket.emit('USERNAME_REQUIRED', { guestId });
-                return;
-            }
-
-            // Validate message
-            if (!data.content && !data.imageUrl && !data.fileUrl) {
-                socket.emit('ERROR', { code: 'INVALID_MESSAGE', message: 'Message must have content, image, or file' });
-                return;
+            // Extract @mentions from content
+            const mentions: string[] = [];
+            if (data.content) {
+                const mentionRegex = /@(\w+)/g;
+                let match;
+                while ((match = mentionRegex.exec(data.content)) !== null) {
+                    mentions.push(match[1]);  // Extract username
+                }
             }
 
             // Create message
             const message = await messageService.createMessage({
                 content: data.content,
+                codeSnippet: data.codeSnippet,
+                codeLanguage: data.codeLanguage,
+                codeFileName: data.codeFileName,
+                isFormatted: data.isFormatted || false,
                 imageUrl: data.imageUrl,
                 fileUrl: data.fileUrl,
                 fileType: data.fileType,
                 fileName: data.fileName,
                 fileSize: data.fileSize,
-                senderId: guestId,
-                senderName: user.username,
+                userId,
                 replyToMessageId: data.replyToMessageId,
+                mentions,
             });
 
-            // Get avatar for response
-            const avatar = getAvatarById(user.avatarId);
-
-            // Broadcast to all users in global chat
-            io.to('global-chat').emit('NEW_MESSAGE', {
+            // Broadcast to all connected clients
+            io.emit('NEW_MESSAGE', {
                 id: message.id,
                 content: message.content,
+                codeSnippet: message.codeSnippet,
+                codeLanguage: message.codeLanguage,
+                codeFileName: message.codeFileName,
+                isFormatted: message.isFormatted,
                 imageUrl: message.imageUrl,
                 fileUrl: message.fileUrl,
                 fileType: message.fileType,
                 fileName: message.fileName,
                 fileSize: message.fileSize,
-                senderId: message.senderId,
-                senderName: message.senderName,
-                avatarId: user.avatarId,
-                customAvatarUrl: user.customAvatarUrl || null,
-                avatarUrl: avatar.url,
+                sender: {
+                    id: message.sender.id,
+                    username: message.sender.username,
+                    avatarUrl: message.sender.avatarUrl,
+                },
                 replyToMessage: message.replyToMessage,
-                reactions: message.reactions,
+                mentions: message.mentions,
+                isEdited: message.isEdited,
+                isDeleted: message.isDeleted,
                 createdAt: message.createdAt,
             });
 
-            // Update last active
-            await userService.updateLastActive(guestId);
-
-        } catch (error: any) {
+            console.log(`Message from ${username}: ${data.content || data.codeSnippet ? 'code' : 'file'}`);
+        } catch (error) {
             console.error('SEND_MESSAGE error:', error);
-            socket.emit('ERROR', { code: 'MESSAGE_FAILED', message: error.message || 'Failed to send message' });
+            socket.emit('ERROR', { code: 'MESSAGE_FAILED', message: 'Failed to send message' });
         }
     });
 
     /**
-     * TYPING - User is typing (optional, for typing indicators)
-     */
-    socket.on('TYPING', (data: { isTyping: boolean }) => {
-        const guestId = getGuestIdFromSocket(socket.id);
-        if (guestId) {
-            socket.to('global-chat').emit('USER_TYPING', {
-                guestId,
-                isTyping: data.isTyping,
-            });
-        }
-    });
-
-    /**
-     * EDIT_MESSAGE - Edit a message (within 30 minutes, only by sender)
+     * EDIT_MESSAGE - Edit an existing message
      */
     socket.on('EDIT_MESSAGE', async (data: { messageId: string; content: string }) => {
         try {
-            const guestId = getGuestIdFromSocket(socket.id);
+            const userId = socket.data.userId;
 
-            if (!guestId) {
-                socket.emit('ERROR', { code: 'NOT_AUTHENTICATED', message: 'Please join the chat first' });
+            if (!userId) {
+                socket.emit('ERROR', { code: 'UNAUTHORIZED', message: 'User not authenticated' });
                 return;
             }
 
-            if (!data.messageId || !data.content) {
+            const { messageId, content } = data;
+
+            if (!messageId || !content) {
                 socket.emit('ERROR', { code: 'INVALID_DATA', message: 'Message ID and content are required' });
                 return;
             }
 
-            // Edit message (service handles validation)
-            const updatedMessage = await messageService.editMessage(data.messageId, guestId, data.content);
+            // Edit message
+            const message = await messageService.editMessage(messageId, userId, content);
 
-            // Get user for avatar
-            const user = await userService.getGuestUser(guestId);
-            const avatar = getAvatarById(user.avatarId);
-
-            // Broadcast to all users
-            io.to('global-chat').emit('MESSAGE_EDITED', {
-                id: updatedMessage.id,
-                content: updatedMessage.content,
-                isEdited: updatedMessage.isEdited,
-                editedAt: updatedMessage.editedAt,
-                senderId: updatedMessage.senderId,
-                senderName: updatedMessage.senderName,
-                avatarId: user.avatarId,
-                avatarUrl: avatar.url,
+            // Broadcast update
+            io.emit('MESSAGE_EDITED', {
+                id: message.id,
+                content: message.content,
+                isEdited: message.isEdited,
+                editedAt: message.editedAt,
             });
 
+            console.log(`Message edited: ${messageId}`);
         } catch (error: any) {
             console.error('EDIT_MESSAGE error:', error);
             socket.emit('ERROR', { code: 'EDIT_FAILED', message: error.message || 'Failed to edit message' });
@@ -143,31 +127,34 @@ export const handleChatEvents = (io: Server, socket: Socket) => {
     });
 
     /**
-     * DELETE_MESSAGE - Delete a message (soft delete, only by sender)
+     * DELETE_MESSAGE - Delete a message
      */
     socket.on('DELETE_MESSAGE', async (data: { messageId: string }) => {
         try {
-            const guestId = getGuestIdFromSocket(socket.id);
+            const userId = socket.data.userId;
 
-            if (!guestId) {
-                socket.emit('ERROR', { code: 'NOT_AUTHENTICATED', message: 'Please join the chat first' });
+            if (!userId) {
+                socket.emit('ERROR', { code: 'UNAUTHORIZED', message: 'User not authenticated' });
                 return;
             }
 
-            if (!data.messageId) {
+            const { messageId } = data;
+
+            if (!messageId) {
                 socket.emit('ERROR', { code: 'INVALID_DATA', message: 'Message ID is required' });
                 return;
             }
 
-            // Delete message (service handles validation)
-            const deletedMessage = await messageService.deleteMessage(data.messageId, guestId);
+            // Delete message
+            await messageService.deleteMessage(messageId, userId);
 
-            // Broadcast to all users
-            io.to('global-chat').emit('MESSAGE_DELETED', {
-                id: deletedMessage.id,
+            // Broadcast deletion
+            io.emit('MESSAGE_DELETED', {
+                id: messageId,
                 isDeleted: true,
             });
 
+            console.log(`Message deleted: ${messageId}`);
         } catch (error: any) {
             console.error('DELETE_MESSAGE error:', error);
             socket.emit('ERROR', { code: 'DELETE_FAILED', message: error.message || 'Failed to delete message' });

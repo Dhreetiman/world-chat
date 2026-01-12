@@ -2,48 +2,42 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Updated S3 avatar URLs from images.md
-const avatars = [
-    { name: 'Avatar 1', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-1.png' },
-    { name: 'Avatar 2', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-2.png' },
-    { name: 'Avatar 3', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-3.jpg' },
-    { name: 'Avatar 4', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-4.jpg' },
-    { name: 'Avatar 5', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-5.jpg' },
-    { name: 'Avatar 6', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-6.jpg' },
-    { name: 'Avatar 7', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-7.jpg' },
-    { name: 'Avatar 8', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-8.jpg' },
-    { name: 'Avatar 9', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-9.jpg' },
-    { name: 'Avatar 10', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-10.jpg' },
-    { name: 'Avatar 11', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-11.jpg' },
-    { name: 'Avatar 12', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-12.jpg' },
-    { name: 'Avatar 13', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-13.jpg' },
-    { name: 'Avatar 14', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-14.jpg' },
-    { name: 'Avatar 15', url: 'https://world-chat-prod.s3.ap-south-1.amazonaws.com/Avatars/avatar-15.jpg' },
-];
-
 async function main() {
-    console.log('🌱 Starting avatar seed...');
+    console.log('Start seeding...');
 
-    await prisma.avatar.deleteMany();
-    console.log('✅ Cleared existing avatars');
+    // Create global room
+    const globalRoom = await prisma.room.upsert({
+        where: { name: 'global' },
+        update: {},
+        create: {
+            id: 'global',
+            name: 'global',
+            description: 'General discussion for all developers',
+            isPublic: true,
+        },
+    });
+    console.log(`Created room: ${globalRoom.name}`);
 
-    for (let i = 0; i < avatars.length; i++) {
+    // Create avatar presets
+    const avatars = [
+        { name: 'Avatar 1', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDMap2CDWof8WvMU6n5ZB3tLY6KRkwEBMRCX3gLsLo5k3ckeMyqFEt1SDSOmWTqb7fUFA9KCrn-D9X4WtyO7eBkJY24ILe8DvU9T0LPwgti_6ntm6dE1PUSpaDUUsjQZ7hBUrzV_D_bMIpNcBY4gSZhx6TMDO1ARxRRlgn17VbCNPxtjshV-EjyyJDLkeG1KfTWsoVTi4XY-INutDifGo2m2P8evW8r-txbII-ae4H3qhepXkHUYOkeYYOiNZWPWU8j84f8lNvFXwi' },
+        { name: 'Avatar 2', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAURjg0F3w7PQxCwYYqRt2rxyudJX6j3lPlWCYV9rb3ceMG1YTwjtIlsepmKTyo54M5ExJhG2MqTIstK1WL5TOs7numeVNRuPfv614EaY2ncOpjvLcif8VMFODfepbCX8XN6WROGGvmsRswmj9gmM8UO-VS3OuSU_woEfQweSWzLJmbKhFdktQ-oxyW6ThtfhT2RTzmT__RQQF52wKKyMQAukF4OKS99n-bYkfPnvwHD9Kw0B6fk9_cd1Mb-oZ8uxNck3XqA0eo_AiX' },
+        { name: 'Avatar 3', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCE2NMCFdXEzPu4y-Z_Ya4NXraRb0RRU_7v-xLyQWeh7J5i7XDdyazHCaW0K7gojbv0A3CZF82CgZs-QLGRSl5LjxEfIk5S8yr5W0_lMFASCAh2c1Toi7tbQkdIdq-svayHaDjNOmwU0uhku4WaNw-EyB0btXjMIW01Xzt5UEWaJ9ZytPIXxw4ivosEteZ0pqH31u7jhrRDBkvzhPIx_iNNZNQCPyoEGkUanHpGiJTkT4xJsj3WQsrzb2SW0mBM8TU1BcR9XBQUT22n' },
+    ];
+
+    for (const avatar of avatars) {
         await prisma.avatar.create({
-            data: {
-                id: i + 1,
-                name: avatars[i].name,
-                url: avatars[i].url,
-            },
+            data: avatar,
         });
     }
+    console.log(`Created ${avatars.length} avatars`);
 
-    console.log(`✅ Inserted ${avatars.length} avatars`);
-    console.log('🎉 Avatar seed completed!');
+    console.log('Seeding finished.');
 }
 
 main()
     .catch((e) => {
-        console.error('❌ Seed failed:', e);
+        console.error(e);
         process.exit(1);
     })
     .finally(async () => {

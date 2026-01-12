@@ -1,4 +1,4 @@
-// Prisma Schema for Open World Chat
+// World Chat V2 - Prisma Schema
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,67 +8,127 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Guest User - Anonymous users with generated UUID
-model GuestUser {
-  id              String        @id @default(uuid())
-  guestId         String        @unique
-  username        String
-  avatarId        Int           @default(1) // References pre-stored avatar (1-10)
-  customAvatarUrl String?       // Custom uploaded avatar URL from S3
-  userTitle       String        @default("common") // "common", "VIP", "Activist", "Warrior", "Pro Gamer" etc.
-  lastActiveAt    DateTime      @default(now())
-  createdAt       DateTime      @default(now())
-  messages        Message[]
-  settings        UserSettings?
+// User - Authenticated users (replaces GuestUser)
+model User {
+  id            String    @id @default(uuid())
+  username      String    @unique
+  passwordHash  String
+  email         String?
+  avatarUrl     String?   // Custom uploaded avatar URL from S3
+  createdAt     DateTime  @default(now())
+  lastActiveAt  DateTime  @default(now())
+  
+  messages      Message[]
+  sessions      Session[]
+  settings      UserSettings?
+  reactions     Reaction[]
 
+  @@index([username])
   @@index([lastActiveAt])
 }
 
-// Message - Chat messages with reactions and replies
+// Session - JWT refresh tokens for auth
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  
+  @@index([userId])
+  @@index([refreshToken])
+}
+
+// Message - Chat messages with code snippets, mentions, and formatting
 model Message {
   id               String    @id @default(uuid())
   content          String?
+  
+  // Code snippet support
+  codeSnippet      String?   // Code content
+  codeLanguage     String?   // e.g., "javascript", "python"
+  codeFileName     String?   // e.g., "auth.js"
+  
+  // Rich text (Markdown)
+  isFormatted      Boolean   @default(false)
+  
+  // Mentions (@username)
+  mentions         String[]  // Array of userIds mentioned
+  
+  // File uploads (existing)
   imageUrl         String?
   fileUrl          String?   // S3 file URL
-  fileType         String?   // MIME type (image/jpeg, video/mp4, etc.)
+  fileType         String?   // MIME type
   fileName         String?   // Original filename
   fileSize         Int?      // Size in bytes
-  senderId         String
-  senderName       String
+  
+  // Reply support
   replyToMessageId String?
   replyToMessage   Message?  @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
   replies          Message[] @relation("MessageReplies")
-  reactions        Json      @default("{}")
+  
+  // Pinning
+  isPinned         Boolean   @default(false)
+  pinnedAt         DateTime?
+  pinnedBy         String?
+  
+  // Metadata
   isEdited         Boolean   @default(false)
   isDeleted        Boolean   @default(false)
   editedAt         DateTime?
   createdAt        DateTime  @default(now())
-  sender           GuestUser @relation(fields: [senderId], references: [guestId], onDelete: Cascade)
+  
+  // Relations
+  senderId         String
+  sender           User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  roomId           String    @default("global") // For future multi-room support
+  room             Room      @relation(fields: [roomId], references: [id])
+  reactions        Reaction[]
 
   @@index([createdAt])
   @@index([senderId])
-  @@index([content])
+  @@index([roomId])
+}
+
+// Reaction - Emoji reactions on messages
+model Reaction {
+  id        String   @id @default(uuid())
+  emoji     String   // e.g., "👍", "❤️", "😂"
+  messageId String
+  userId    String
+  createdAt DateTime @default(now())
+  
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+}
+
+// Room - Chat rooms/channels
+model Room {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  isPublic    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  messages    Message[]
 }
 
 // User Settings - Theme and notification preferences
 model UserSettings {
-  id            String    @id @default(uuid())
-  guestId       String    @unique
-  theme         String    @default("dark") // "dark" | "light"
-  notifications Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  guest         GuestUser @relation(fields: [guestId], references: [guestId], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  theme         String   @default("dark") // "dark" | "light"
+  notifications Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Room Metadata - Global chat room information
-model RoomMetadata {
-  id          String @id @default(uuid())
-  name        String @default("Global Chat Room")
-  description String @default("Join the conversation instantly. No login, no history tracking. Just pick a name and say hello to the world.")
-}
-
-// Avatar - Pre-stored avatar images
+// Avatar - Pre-stored avatar images (kept for reference)
 model Avatar {
   id        Int      @id @default(autoincrement())
   name      String

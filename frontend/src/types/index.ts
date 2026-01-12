@@ -1,26 +1,39 @@
 // Message types
+export interface MessageReaction {
+    emoji: string;
+    count: number;
+    users: { id: string; username: string }[];
+    hasReacted?: boolean; // Did current user react with this emoji
+}
+
 export interface Message {
     id: string;
     content: string | null;
+    codeSnippet?: string | null;
+    codeLanguage?: string | null;
+    codeFileName?: string | null;
+    isFormatted?: boolean;
     imageUrl: string | null;
     fileUrl?: string;
     fileType?: string;
     fileName?: string;
     fileSize?: number;
     senderId: string;
-    senderName: string;
-    avatarId: number;
-    customAvatarUrl?: string;
-    userTitle?: string;
+    sender: {
+        id: string;
+        username: string;
+        avatarUrl: string | null;
+    };
     replyToMessage?: {
         id: string;
         content: string | null;
-        imageUrl: string | null;
-        senderName: string;
-        avatarId: number;
-        customAvatarUrl?: string;
+        codeSnippet?: string | null;
+        sender: {
+            username: string;
+        };
     } | null;
-    reactions: Record<string, string[]>;
+    mentions?: string[];
+    reactions?: MessageReaction[];
     isEdited?: boolean;
     isDeleted?: boolean;
     editedAt?: string;
@@ -29,11 +42,11 @@ export interface Message {
 
 // User types
 export interface User {
-    guestId: string;
+    id: string;
     username: string;
-    avatarId: number;
-    customAvatarUrl?: string;
-    userTitle: string;
+    email?: string;
+    avatarUrl?: string | null;
+    createdAt: string;
 }
 
 export interface UserSettings {
@@ -58,18 +71,12 @@ export interface RoomInfo {
 }
 
 // Socket event payloads
-export interface JoinChatPayload {
-    guestId: string;
-}
-
-export interface SetUsernamePayload {
-    guestId: string;
-    username: string;
-    avatarId: number;
-}
-
 export interface SendMessagePayload {
     content?: string;
+    codeSnippet?: string;
+    codeLanguage?: string;
+    codeFileName?: string;
+    isFormatted?: boolean;
     imageUrl?: string;
     fileUrl?: string;
     fileType?: string;

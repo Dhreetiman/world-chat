@@ -1,99 +1,123 @@
-import prisma from '../../config/db';
-import { isValidEmoji } from '../../utils/sanitize';
-import { NotFoundError, BadRequestError } from '../../middlewares/errorHandler';
+import { PrismaClient } from '@prisma/client';
 
-export interface ToggleReactionInput {
-    messageId: string;
-    guestId: string;
-    emoji: string;
-}
-
-interface Reactions {
-    [emoji: string]: string[];
-}
+const prisma = new PrismaClient();
 
 /**
- * Toggle reaction on a message
- * If user has already reacted with this emoji, remove it
- * Otherwise, add the reaction
+ * Add a reaction to a message
  */
-export const toggleReaction = async (input: ToggleReactionInput) => {
-    const { messageId, guestId, emoji } = input;
-
-    // Validate emoji
-    if (!isValidEmoji(emoji)) {
-        throw new BadRequestError('Invalid emoji');
-    }
-
-    // Get message
+export const addReaction = async (messageId: string, userId: string, emoji: string) => {
+    // Check if message exists
     const message = await prisma.message.findUnique({
         where: { id: messageId },
     });
 
     if (!message) {
-        throw new NotFoundError('Message not found');
+        const error: any = new Error('Message not found');
+        error.statusCode = 404;
+        throw error;
     }
 
-    // Get current reactions
-    const reactions: Reactions = (message.reactions as Reactions) || {};
-
-    // Toggle reaction
-    if (reactions[emoji]?.includes(guestId)) {
-        // Remove reaction
-        reactions[emoji] = reactions[emoji].filter((id) => id !== guestId);
-
-        // Clean up empty emoji arrays
-        if (reactions[emoji].length === 0) {
-            delete reactions[emoji];
-        }
-    } else {
-        // Add reaction
-        if (!reactions[emoji]) {
-            reactions[emoji] = [];
-        }
-        reactions[emoji].push(guestId);
-    }
-
-    // Update message
-    const updatedMessage = await prisma.message.update({
-        where: { id: messageId },
-        data: { reactions },
+    // Check if reaction already exists (toggle off)
+    const existing = await prisma.reaction.findUnique({
+        where: {
+            messageId_userId_emoji: {
+                messageId,
+                userId,
+                emoji,
+            },
+        },
     });
 
-    return {
-        messageId,
-        reactions: updatedMessage.reactions,
-    };
-};
-
-/**
- * Get reactions for a message
- */
-export const getReactions = async (messageId: string) => {
-    const message = await prisma.message.findUnique({
-        where: { id: messageId },
-        select: { reactions: true },
-    });
-
-    if (!message) {
-        throw new NotFoundError('Message not found');
-    }
-
-    return message.reactions;
-};
-
-/**
- * Get reactions with user details (summary format)
- */
-export const getReactionsSummary = (reactions: Reactions) => {
-    const summary: { emoji: string; count: number }[] = [];
-
-    for (const [emoji, users] of Object.entries(reactions)) {
-        summary.push({
-            emoji,
-            count: users.length,
+    if (existing) {
+        // Remove existing reaction (toggle)
+        await prisma.reaction.delete({
+            where: { id: existing.id },
         });
+        return { action: 'removed', messageId, emoji, userId };
     }
 
-    return summary.sort((a, b) => b.count - a.count);
+    // Add new reaction
+    const reaction = await prisma.reaction.create({
+        data: {
+            emoji,
+            messageId,
+            userId,
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    username: true,
+                },
+            },
+        },
+    });
+
+    return { action: 'added', messageId, emoji, userId, username: reaction.user.username };
+};
+
+/**
+ * Remove a reaction from a message
+ */
+export const removeReaction = async (messageId: string, userId: string, emoji: string) => {
+    const reaction = await prisma.reaction.findUnique({
+        where: {
+            messageId_userId_emoji: {
+                messageId,
+                userId,
+                emoji,
+            },
+        },
+    });
+
+    if (!reaction) {
+        const error: any = new Error('Reaction not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    await prisma.reaction.delete({
+        where: { id: reaction.id },
+    });
+
+    return { success: true, messageId, emoji, userId };
+};
+
+/**
+ * Get all reactions for a message
+ */
+export const getMessageReactions = async (messageId: string) => {
+    const reactions = await prisma.reaction.findMany({
+        where: { messageId },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    username: true,
+                },
+            },
+        },
+        orderBy: {
+            createdAt: 'asc',
+        },
+    });
+
+    // Group reactions by emoji
+    const grouped: Record<string, { emoji: string; count: number; users: { id: string; username: string }[] }> = {};
+
+    reactions.forEach((r) => {
+        if (!grouped[r.emoji]) {
+            grouped[r.emoji] = { emoji: r.emoji, count: 0, users: [] };
+        }
+        grouped[r.emoji].count++;
+        grouped[r.emoji].users.push({ id: r.user.id, username: r.user.username });
+    });
+
+    return Object.values(grouped);
+};
+
+export const reactionService = {
+    addReaction,
+    removeReaction,
+    getMessageReactions,
 };

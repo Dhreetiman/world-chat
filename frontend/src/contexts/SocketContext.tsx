@@ -2,20 +2,28 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Socket } from 'socket.io-client';
-import { getSocket, connectSocket, disconnectSocket } from '@/lib/socket';
-import { useUser } from './UserContext';
+import { getSocket, disconnectSocket } from '@/lib/socket';
+import { useAuth } from './AuthContext';
 import { useChat } from './ChatContext';
 import { Message, SendMessagePayload, SendReactionPayload, EditMessagePayload, DeleteMessagePayload } from '@/types';
+
+interface OnlineUser {
+    id: string;
+    username: string;
+    avatarUrl: string | null;
+}
 
 interface SocketContextType {
     socket: Socket | null;
     isConnected: boolean;
-    joinChat: () => void;
-    setUsername: (username: string, avatarId: number) => void;
+    onlineUsers: OnlineUser[];
+    onlineCount: number;
     sendMessage: (payload: SendMessagePayload) => void;
     sendReaction: (payload: SendReactionPayload) => void;
     editMessage: (payload: EditMessagePayload) => void;
     deleteMessage: (payload: DeleteMessagePayload) => void;
+    startTyping: (roomId?: string) => void;
+    stopTyping: (roomId?: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -23,21 +31,35 @@ const SocketContext = createContext<SocketContextType | undefined>(undefined);
 export function SocketProvider({ children }: { children: ReactNode }) {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
-    const { user, registerUser, refreshUser } = useUser();
-    const { addMessage, updateMessageReactions, updateMessage, markMessageDeleted, setOnlineCount } = useChat();
+    const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+    const [onlineCount, setOnlineCount] = useState(0);
+    const { user, accessToken, isAuthenticated } = useAuth();
+    const { addMessage, updateMessageReactions, updateMessage, markMessageDeleted } = useChat();
 
-    // Initialize socket connection
+    // Initialize socket connection with JWT auth
     useEffect(() => {
-        const s = getSocket();
+        if (!isAuthenticated || !accessToken || !user) {
+            // Not authenticated, disconnect if connected
+            if (socket) {
+                console.log('🔒 Not authenticated, disconnecting socket');
+                disconnectSocket();
+                setSocket(null);
+                setIsConnected(false);
+            }
+            return;
+        }
+
+        // Get socket instance with JWT token
+        const s = getSocket(accessToken);
         setSocket(s);
 
         const onConnect = () => {
-            console.log('Socket connected');
+            console.log('✅ Socket connected with authentication');
             setIsConnected(true);
         };
 
         const onDisconnect = () => {
-            console.log('Socket disconnected');
+            console.log('❌ Socket disconnected');
             setIsConnected(false);
         };
 
@@ -49,50 +71,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             addMessage(message);
         };
 
-        const onReactionUpdated = (data: { messageId: string; reactions: Record<string, string[]> }) => {
-            updateMessageReactions(data.messageId, data.reactions);
-        };
-
-        const onOnlineCount = (data: { count: number }) => {
-            setOnlineCount(data.count);
-        };
-
-        const onUsernameRequired = async () => {
-            // Will be handled by the modal in the UI
-            console.log('Username required');
-        };
-
-        const onUsernameSet = async () => {
-            await refreshUser();
-        };
-
-        const onSystemMessage = (data: { content: string; isPrivate: boolean }) => {
-            // Add system message to chat
-            const systemMessage: Message = {
-                id: `system-${Date.now()}`,
-                content: data.content,
-                imageUrl: null,
-                senderId: 'system',
-                senderName: 'System',
-                avatarId: 0,
-                reactions: {},
-                createdAt: new Date().toISOString(),
-            };
-            addMessage(systemMessage);
-        };
-
-        // Register event listeners
-        s.on('connect', onConnect);
-        s.on('disconnect', onDisconnect);
-        s.on('ERROR', onError);
-        s.on('NEW_MESSAGE', onNewMessage);
-        s.on('MESSAGE_REACTION_UPDATED', onReactionUpdated);
-        s.on('ONLINE_USERS_COUNT', onOnlineCount);
-        s.on('USERNAME_REQUIRED', onUsernameRequired);
-        s.on('USERNAME_SET', onUsernameSet);
-        s.on('SYSTEM_MESSAGE', onSystemMessage);
-
-        // Edit/Delete message listeners
         const onMessageEdited = (data: { id: string; content: string; isEdited: boolean; editedAt: string }) => {
             updateMessage(data.id, {
                 content: data.content,
@@ -105,100 +83,101 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             markMessageDeleted(data.id);
         };
 
+        const onOnlineUsersUpdated = (data: { count: number; users: OnlineUser[] }) => {
+            setOnlineUsers(data.users);
+            setOnlineCount(data.count);
+        };
+
+        const onReactionUpdated = (data: { messageId: string; emoji: string; action: 'added' | 'removed'; userId: string; username?: string }) => {
+            // Tell ChatContext to update the message's reactions
+            updateMessageReactions(data.messageId, data.emoji, data.action, data.userId, data.username);
+        };
+
+        // Register event listeners
+        s.on('connect', onConnect);
+        s.on('disconnect', onDisconnect);
+        s.on('ERROR', onError);
+        s.on('NEW_MESSAGE', onNewMessage);
+        s.on('REACTION_UPDATED', onReactionUpdated);
+        s.on('ONLINE_USERS_UPDATED', onOnlineUsersUpdated);
         s.on('MESSAGE_EDITED', onMessageEdited);
         s.on('MESSAGE_DELETED', onMessageDeleted);
 
-        // Connect
-        connectSocket();
-
+        // Cleanup on unmount or auth change
         return () => {
             s.off('connect', onConnect);
             s.off('disconnect', onDisconnect);
             s.off('ERROR', onError);
             s.off('NEW_MESSAGE', onNewMessage);
-            s.off('MESSAGE_REACTION_UPDATED', onReactionUpdated);
-            s.off('ONLINE_USERS_COUNT', onOnlineCount);
-            s.off('USERNAME_REQUIRED', onUsernameRequired);
-            s.off('USERNAME_SET', onUsernameSet);
-            s.off('SYSTEM_MESSAGE', onSystemMessage);
+            s.off('REACTION_UPDATED', onReactionUpdated);
+            s.off('ONLINE_USERS_UPDATED', onOnlineUsersUpdated);
             s.off('MESSAGE_EDITED', onMessageEdited);
             s.off('MESSAGE_DELETED', onMessageDeleted);
             disconnectSocket();
         };
-    }, [addMessage, updateMessageReactions, updateMessage, markMessageDeleted, setOnlineCount, refreshUser]);
-
-    // Join chat when user is available
-    const joinChat = useCallback(async () => {
-        if (!socket || !isConnected) return;
-
-        let guestId = user?.guestId;
-
-        // If no user, register first
-        if (!guestId) {
-            try {
-                await registerUser();
-                guestId = localStorage.getItem('guestId') || undefined;
-            } catch (error) {
-                console.error('Failed to register:', error);
-                return;
-            }
-        }
-
-        if (guestId) {
-            socket.emit('JOIN_CHAT', { guestId });
-        }
-    }, [socket, isConnected, user, registerUser]);
-
-    // Set username
-    const setUsername = useCallback((username: string, avatarId: number) => {
-        if (!socket || !user) return;
-        socket.emit('SET_USERNAME', {
-            guestId: user.guestId,
-            username,
-            avatarId,
-        });
-    }, [socket, user]);
+    }, [isAuthenticated, accessToken, user, addMessage, updateMessageReactions, updateMessage, markMessageDeleted]);
 
     // Send message
     const sendMessage = useCallback((payload: SendMessagePayload) => {
-        if (!socket || !isConnected) return;
+        if (!socket || !isConnected) {
+            console.error('Socket not connected');
+            return;
+        }
         socket.emit('SEND_MESSAGE', payload);
     }, [socket, isConnected]);
 
     // Send reaction
     const sendReaction = useCallback((payload: SendReactionPayload) => {
-        if (!socket || !isConnected) return;
-        socket.emit('SEND_REACTION', payload);
+        if (!socket || !isConnected) {
+            console.error('Socket not connected');
+            return;
+        }
+        socket.emit('ADD_REACTION', payload);
     }, [socket, isConnected]);
 
     // Edit message
     const editMessage = useCallback((payload: EditMessagePayload) => {
-        if (!socket || !isConnected) return;
+        if (!socket || !isConnected) {
+            console.error('Socket not connected');
+            return;
+        }
         socket.emit('EDIT_MESSAGE', payload);
     }, [socket, isConnected]);
 
     // Delete message
     const deleteMessage = useCallback((payload: DeleteMessagePayload) => {
-        if (!socket || !isConnected) return;
+        if (!socket || !isConnected) {
+            console.error('Socket not connected');
+            return;
+        }
         socket.emit('DELETE_MESSAGE', payload);
     }, [socket, isConnected]);
 
-    return (
-        <SocketContext.Provider
-            value={{
-                socket,
-                isConnected,
-                joinChat,
-                setUsername,
-                sendMessage,
-                sendReaction,
-                editMessage,
-                deleteMessage,
-            }}
-        >
-            {children}
-        </SocketContext.Provider>
-    );
+    // Typing indicators
+    const startTyping = useCallback((roomId = 'global') => {
+        if (!socket || !isConnected) return;
+        socket.emit('TYPING_START', { roomId });
+    }, [socket, isConnected]);
+
+    const stopTyping = useCallback((roomId = 'global') => {
+        if (!socket || !isConnected) return;
+        socket.emit('TYPING_STOP', { roomId });
+    }, [socket, isConnected]);
+
+    const value = {
+        socket,
+        isConnected,
+        onlineUsers,
+        onlineCount,
+        sendMessage,
+        sendReaction,
+        editMessage,
+        deleteMessage,
+        startTyping,
+        stopTyping,
+    };
+
+    return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 }
 
 export function useSocket() {

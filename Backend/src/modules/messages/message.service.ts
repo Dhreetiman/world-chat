@@ -4,36 +4,58 @@ import { NotFoundError, BadRequestError } from '../../middlewares/errorHandler';
 
 export interface CreateMessageInput {
     content?: string;
+    codeSnippet?: string;
+    codeLanguage?: string;
+    codeFileName?: string;
+    isFormatted?: boolean;
     imageUrl?: string;
     fileUrl?: string;
     fileType?: string;
     fileName?: string;
     fileSize?: number;
-    senderId: string;
-    senderName: string;
+    userId: string;  // From JWT
     replyToMessageId?: string;
+    mentions?: string[];  // Array of user IDs mentioned
 }
 
 export interface GetMessagesInput {
     page?: number;
     limit?: number;
-}
-
-export interface SearchMessagesInput {
-    query: string;
-    page?: number;
-    limit?: number;
+    roomId?: string;
 }
 
 /**
  * Create a new message
  */
 export const createMessage = async (input: CreateMessageInput) => {
-    const { content, imageUrl, fileUrl, fileType, fileName, fileSize, senderId, senderName, replyToMessageId } = input;
+    const {
+        content,
+        codeSnippet,
+        codeLanguage,
+        codeFileName,
+        isFormatted = false,
+        imageUrl,
+        fileUrl,
+        fileType,
+        fileName,
+        fileSize,
+        userId,
+        replyToMessageId,
+        mentions = [],
+    } = input;
 
-    // Validate: must have content, image, or file
-    if (!content && !imageUrl && !fileUrl) {
-        throw new BadRequestError('Message must have content, an image, or a file');
+    // Validate: must have content, code snippet, image, or file
+    if (!content && !codeSnippet && !imageUrl && !fileUrl) {
+        throw new BadRequestError('Message must have content, code snippet, image, or file');
+    }
+
+    // Validate user exists
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+
+    if (!user) {
+        throw new NotFoundError('User not found');
     }
 
     // Sanitize message content
@@ -54,27 +76,38 @@ export const createMessage = async (input: CreateMessageInput) => {
     const message = await prisma.message.create({
         data: {
             content: sanitizedContent,
+            codeSnippet: codeSnippet || null,
+            codeLanguage: codeLanguage || null,
+            codeFileName: codeFileName || null,
+            isFormatted,
             imageUrl: imageUrl || null,
             fileUrl: fileUrl || null,
             fileType: fileType || null,
             fileName: fileName || null,
             fileSize: fileSize || null,
-            senderId,
-            senderName,
+            senderId: userId,
+            roomId: 'global',  // Default to global room
             replyToMessageId: replyToMessageId || null,
-            reactions: {},
+            mentions: mentions || [],
         },
         include: {
+            sender: {
+                select: {
+                    id: true,
+                    username: true,
+                    avatarUrl: true,
+                },
+            },
             replyToMessage: {
                 select: {
                     id: true,
                     content: true,
-                    senderName: true,
-                },
-            },
-            sender: {
-                select: {
-                    avatarId: true,
+                    codeSnippet: true,
+                    sender: {
+                        select: {
+                            username: true,
+                        },
+                    },
                 },
             },
         },
@@ -84,104 +117,239 @@ export const createMessage = async (input: CreateMessageInput) => {
 };
 
 /**
- * Get messages (within 24 hours, paginated)
- * Fetches newest messages first, then reverses for chronological display
- * This ensures page 1 contains the LATEST messages, not oldest
+ * Get messages (paginated, newest first)
  */
 export const getMessages = async (input: GetMessagesInput) => {
-    const { page = 1, limit = 50 } = input;
-
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const { page = 1, limit = 50, roomId = 'global' } = input;
 
     const [messages, total] = await Promise.all([
         prisma.message.findMany({
             where: {
-                createdAt: { gte: twentyFourHoursAgo },
+                roomId,
+                isDeleted: false,
             },
-            orderBy: { createdAt: 'desc' },  // Fetch newest first
+            orderBy: { createdAt: 'desc' },  // Newest first
             skip: (page - 1) * limit,
             take: limit,
             include: {
+                sender: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatarUrl: true,
+                    },
+                },
                 replyToMessage: {
                     select: {
                         id: true,
                         content: true,
-                        senderName: true,
-                    },
-                },
-                sender: {
-                    select: {
-                        avatarId: true,
-                        customAvatarUrl: true,
+                        codeSnippet: true,
+                        sender: {
+                            select: {
+                                username: true,
+                            },
+                        },
                     },
                 },
             },
         }),
         prisma.message.count({
             where: {
-                createdAt: { gte: twentyFourHoursAgo },
+                roomId,
+                isDeleted: false,
             },
         }),
     ]);
 
-    // Reverse to get chronological order (oldest to newest) for display
+    // Reverse to get chronological order (oldest first)
     return {
         messages: messages.reverse(),
-        pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-        },
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total,
     };
 };
 
 /**
- * Search messages within 24-hour retention window
+ * Edit message
  */
-export const searchMessages = async (input: SearchMessagesInput) => {
-    const { query, page = 1, limit = 20 } = input;
+export const editMessage = async (messageId: string, userId: string, newContent: string) => {
+    // Find message
+    const message = await prisma.message.findUnique({
+        where: { id: messageId },
+    });
 
-    if (!query || query.trim().length < 2) {
-        throw new BadRequestError('Search query must be at least 2 characters');
+    if (!message) {
+        throw new NotFoundError('Message not found');
     }
 
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Verify ownership
+    if (message.senderId !== userId) {
+        throw new BadRequestError('You can only edit your own messages');
+    }
 
-    const [messages, total] = await Promise.all([
-        prisma.message.findMany({
-            where: {
-                createdAt: { gte: twentyFourHoursAgo },
-                content: {
-                    contains: query.trim(),
-                    mode: 'insensitive',
+    // Sanitize content
+    const sanitizedContent = sanitizeMessage(newContent);
+
+    // Update message
+    const updatedMessage = await prisma.message.update({
+        where: { id: messageId },
+        data: {
+            content: sanitizedContent,
+            isEdited: true,
+            editedAt: new Date(),
+        },
+        include: {
+            sender: {
+                select: {
+                    id: true,
+                    username: true,
+                    avatarUrl: true,
                 },
             },
-            orderBy: { createdAt: 'desc' },
-            skip: (page - 1) * limit,
-            take: limit,
-            include: {
-                sender: {
-                    select: {
-                        avatarId: true,
+        },
+    });
+
+    return updatedMessage;
+};
+
+/**
+ * Delete message (soft delete)
+ */
+export const deleteMessage = async (messageId: string, userId: string) => {
+    const message = await prisma.message.findUnique({
+        where: { id: messageId },
+    });
+
+    if (!message) {
+        const error: any = new Error('Message not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (message.senderId !== userId) {
+        const error: any = new Error('Not authorized to delete this message');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    await prisma.message.update({
+        where: { id: messageId },
+        data: {
+            isDeleted: true,
+            content: null,
+            codeSnippet: null,
+            imageUrl: null,
+            fileUrl: null,
+        },
+    });
+
+    return { success: true };
+};
+
+/**
+ * Search messages
+ */
+export interface SearchFilters {
+    userId?: string;
+    messageType?: 'text' | 'code' | 'file' | 'all';
+}
+
+export const searchMessages = async (
+    query: string,
+    filters: SearchFilters = {},
+    page = 1,
+    limit = 20
+) => {
+    if (!query || query.trim().length === 0) {
+        return {
+            messages: [],
+            pagination: {
+                page,
+                limit,
+                total: 0,
+                totalPages: 0,
+            },
+        };
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const whereClause: any = {
+        isDeleted: false,
+        OR: [
+            { content: { contains: query, mode: 'insensitive' } },
+            { codeSnippet: { contains: query, mode: 'insensitive' } },
+            { fileName: { contains: query, mode: 'insensitive' } },
+        ],
+    };
+
+    // Apply user filter
+    if (filters.userId) {
+        whereClause.senderId = filters.userId;
+    }
+
+    // Apply message type filter
+    if (filters.messageType && filters.messageType !== 'all') {
+        switch (filters.messageType) {
+            case 'text':
+                whereClause.AND = [
+                    { content: { not: null } },
+                    { codeSnippet: null },
+                    { fileUrl: null },
+                ];
+                break;
+            case 'code':
+                whereClause.codeSnippet = { not: null };
+                break;
+            case 'file':
+                whereClause.OR = [
+                    { imageUrl: { not: null } },
+                    { fileUrl: { not: null } },
+                ];
+                break;
+        }
+    }
+
+    // Get total count
+    const total = await prisma.message.count({ where: whereClause });
+
+    // Fetch messages
+    const messages = await prisma.message.findMany({
+        where: whereClause,
+        include: {
+            sender: {
+                select: {
+                    id: true,
+                    username: true,
+                    avatarUrl: true,
+                },
+            },
+            replyToMessage: {
+                select: {
+                    id: true,
+                    content: true,
+                    codeSnippet: true,
+                    sender: {
+                        select: {
+                            username: true,
+                        },
                     },
                 },
             },
-        }),
-        prisma.message.count({
-            where: {
-                createdAt: { gte: twentyFourHoursAgo },
-                content: {
-                    contains: query.trim(),
-                    mode: 'insensitive',
-                },
-            },
-        }),
-    ]);
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+    });
 
     return {
         messages,
-        query: query.trim(),
         pagination: {
             page,
             limit,
@@ -198,16 +366,22 @@ export const getMessageById = async (messageId: string) => {
     const message = await prisma.message.findUnique({
         where: { id: messageId },
         include: {
+            sender: {
+                select: {
+                    id: true,
+                    username: true,
+                    avatarUrl: true,
+                },
+            },
             replyToMessage: {
                 select: {
                     id: true,
                     content: true,
-                    senderName: true,
-                },
-            },
-            sender: {
-                select: {
-                    avatarId: true,
+                    sender: {
+                        select: {
+                            username: true,
+                        },
+                    },
                 },
             },
         },
@@ -218,102 +392,4 @@ export const getMessageById = async (messageId: string) => {
     }
 
     return message;
-};
-
-/**
- * Edit a message (only sender can edit, within 30 minutes)
- */
-export const editMessage = async (messageId: string, senderId: string, newContent: string) => {
-    // Find the message
-    const message = await prisma.message.findUnique({
-        where: { id: messageId },
-    });
-
-    if (!message) {
-        throw new NotFoundError('Message not found');
-    }
-
-    // Check if sender owns the message
-    if (message.senderId !== senderId) {
-        throw new BadRequestError('You can only edit your own messages');
-    }
-
-    // Check if message is deleted
-    if (message.isDeleted) {
-        throw new BadRequestError('Cannot edit a deleted message');
-    }
-
-    // Check 30-minute window
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-    if (message.createdAt < thirtyMinutesAgo) {
-        throw new BadRequestError('Messages can only be edited within 30 minutes of sending');
-    }
-
-    // Validate new content
-    if (!newContent || !newContent.trim()) {
-        throw new BadRequestError('Message content cannot be empty');
-    }
-
-    // Sanitize and update
-    const sanitizedContent = sanitizeMessage(newContent);
-
-    const updatedMessage = await prisma.message.update({
-        where: { id: messageId },
-        data: {
-            content: sanitizedContent,
-            isEdited: true,
-            editedAt: new Date(),
-        },
-        include: {
-            replyToMessage: {
-                select: {
-                    id: true,
-                    content: true,
-                    senderName: true,
-                },
-            },
-            sender: {
-                select: {
-                    avatarId: true,
-                },
-            },
-        },
-    });
-
-    return updatedMessage;
-};
-
-/**
- * Delete a message (soft delete, only sender can delete)
- */
-export const deleteMessage = async (messageId: string, senderId: string) => {
-    // Find the message
-    const message = await prisma.message.findUnique({
-        where: { id: messageId },
-    });
-
-    if (!message) {
-        throw new NotFoundError('Message not found');
-    }
-
-    // Check if sender owns the message
-    if (message.senderId !== senderId) {
-        throw new BadRequestError('You can only delete your own messages');
-    }
-
-    // Check if already deleted
-    if (message.isDeleted) {
-        throw new BadRequestError('Message is already deleted');
-    }
-
-    // Soft delete
-    const deletedMessage = await prisma.message.update({
-        where: { id: messageId },
-        data: {
-            isDeleted: true,
-            content: null, // Clear content for privacy
-        },
-    });
-
-    return deletedMessage;
 };

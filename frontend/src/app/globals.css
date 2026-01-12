@@ -1,42 +1,39 @@
 @import "tailwindcss";
 
-/* CSS Variables for theming */
+/* CSS Variables for theming - Investor Mockup Style */
 :root {
-  /* Light theme (default values, will be overridden by dark class) */
-  --primary: #13a4ec;
-  --primary-hover: #0ea5e9;
+  /* Cyan primary color scheme */
+  --primary: #06b6d4;
+  /* Cyan 500 */
+  --primary-hover: #22d3ee;
+  /* Cyan 400 */
+  --primary-glow: rgba(6, 182, 212, 0.15);
+  --primary-glow-sm: rgba(6, 182, 212, 0.3);
 
-  /* Light mode colors */
-  --background: #f8fafc;
-  --background-sidebar: #ffffff;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
+  /* Dark mode colors (default) */
+  --background: #0B1121;
+  /* Deep Navy */
+  --background-darker: #020617;
+  /* Almost black navy for sidebar */
+  --background-sidebar: #020617;
+  --surface: rgba(30, 41, 59, 0.4);
+  /* Glassy surface */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --code-bg: #0f172a;
 
-  /* Message colors */
-  --message-other-bg: #ffffff;
-  --message-other-border: #e2e8f0;
-  --message-self-bg: #13a4ec;
-  --message-self-text: #ffffff;
-}
-
-.dark {
-  /* Dark mode colors */
-  --background: #0c1524;
-  --background-sidebar: #0f1a2b;
-  --surface: #162032;
-  --border: #1e3a5f;
+  /* Text colors */
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
-  /* Message colors dark */
-  --message-other-bg: #162032;
-  --message-other-border: #1e3a5f;
-  --message-self-bg: #13a4ec;
-  --message-self-text: #ffffff;
+  /* Message colors */
+  --message-other-bg: rgba(15, 23, 42, 0.6);
+  --message-other-border: rgba(255, 255, 255, 0.05);
+}
+
+.dark {
+  /* Same as root for now - dark mode only */
 }
 
 @theme inline {
@@ -48,8 +45,9 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  --font-display: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Noto Sans', sans-serif;
+  --font-display: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* Base styles */
@@ -65,10 +63,10 @@ body {
   font-family: var(--font-display), system-ui, sans-serif;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Investor mockup style */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -76,18 +74,49 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
-  border-radius: 4px;
+  background: #334155;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: #475569;
 }
 
 /* Selection */
 ::selection {
   background-color: var(--primary);
   color: white;
+}
+
+/* Glass Panel - Investor mockup input style */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Markdown toolbar button style */
+.markdown-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.markdown-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #22d3ee;
+}
+
+/* Glow effects */
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+
+.shadow-glow-sm {
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
 }
 
 /* Animations */

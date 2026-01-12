@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Openwave Linear Style V3</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#06b6d4", // Cyan 500
+                        "primary-hover": "#22d3ee", // Cyan 400
+                        "secondary": "#1e293b", // Slate 800
+                        "surface": "rgba(30, 41, 59, 0.4)", // Glassy surface
+                        "background-dark": "#0B1121", // Deep Navy
+                        "background-darker": "#020617", // Almost black navy for sidebar
+                        "border-subtle": "rgba(255, 255, 255, 0.08)",
+                        "code-bg": "#0f172a",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    boxShadow: {
+                        "glow": "0 0 20px rgba(6, 182, 212, 0.15)",
+                        "glow-sm": "0 0 10px rgba(6, 182, 212, 0.3)",
+                    },
+                    animation: {
+                        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .markdown-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .markdown-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #22d3ee;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-dark text-slate-300 font-sans overflow-hidden h-screen flex selection:bg-primary/30 selection:text-white">
+    <aside
+        class="w-[70px] flex flex-col items-center py-6 gap-4 border-r border-border-subtle bg-background-darker z-30 shrink-0">
+        <div class="size-10 flex items-center justify-center text-primary mb-2 shadow-glow rounded-xl bg-primary/10">
+            <svg class="size-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z"
+                    fill="currentColor"></path>
+            </svg>
+        </div>
+        <button
+            class="size-10 rounded-lg bg-surface text-primary border border-primary/20 flex items-center justify-center transition-all group relative shadow-glow-sm">
+            <span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+        </button>
+        <button
+            class="size-10 rounded-lg bg-transparent hover:bg-white/5 text-gray-500 hover:text-gray-200 flex items-center justify-center transition-colors">
+            <span class="material-symbols-outlined text-[20px]">code</span>
+        </button>
+        <button
+            class="size-10 rounded-lg bg-transparent hover:bg-white/5 text-gray-500 hover:text-gray-200 flex items-center justify-center transition-colors">
+            <span class="material-symbols-outlined text-[20px]">folder_open</span>
+        </button>
+        <button
+            class="size-10 rounded-lg bg-transparent hover:bg-white/5 text-gray-500 hover:text-gray-200 flex items-center justify-center transition-colors">
+            <span class="material-symbols-outlined text-[20px]">settings</span>
+        </button>
+        <div class="flex-1"></div>
+        <button
+            class="size-9 rounded-lg bg-cover bg-center border border-border-subtle hover:border-primary/50 transition-colors opacity-80 hover:opacity-100"
+            data-alt="User profile avatar"
+            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDCXx8-PZx7NBhtPj-nhmWzUOMhjoWSvR5aUguJurHgiV3lvTS57fzpozl1zQkCCZNwr7ejP8ZK_cNsYbdmOHAbOwopNSHm2MuQN9TgMR9lK5qFbNAqbUCYpNAKjz50JBRNl4K18jm1qDvn03LahAEYzCK2Q88tPDlztJ8oPbNTURItAPMgREuMKc-_XsjewuX86_PaxalUwPkEUdEMkIbbIMXq0VoB5cSAaEr1td-O5nU0p0vJY5hIGwX5Rz1GUxv85B2qkHsTOb4m");'>
+        </button>
+    </aside>
+    <main class="flex-1 flex flex-col h-full min-w-0 bg-background-dark relative">
+        <div
+            class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background-dark/0 to-transparent pointer-events-none z-0">
+        </div>
+        <header
+            class="h-14 flex items-center justify-between px-6 border-b border-border-subtle bg-background-dark/80 backdrop-blur-md z-20 shrink-0">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-gray-500 text-[20px]">tag</span>
+                <div class="flex flex-col">
+                    <h2 class="text-gray-100 text-sm font-semibold tracking-wide flex items-center gap-2">
+                        global-dev
+                    </h2>
+                </div>
+                <div class="h-4 w-px bg-border-subtle mx-2"></div>
+                <p class="text-xs text-gray-500">General discussion for all developers</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div
+                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
+                    <div class="relative flex h-2 w-2">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span
+                            class="relative inline-flex rounded-full h-2 w-2 bg-primary shadow-[0_0_8px_2px_rgba(6,182,212,0.4)]"></span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-primary uppercase tracking-widest">Live</span>
+                        <span class="text-[10px] text-gray-500 font-medium">·</span>
+                        <span class="text-[10px] text-gray-400 font-medium">1,248 online</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button
+                        class="flex items-center justify-center size-8 rounded hover:bg-white/5 transition-colors text-gray-500 hover:text-gray-300">
+                        <span class="material-symbols-outlined text-[18px]">search</span>
+                    </button>
+                    <button
+                        class="flex items-center justify-center size-8 rounded hover:bg-white/5 transition-colors text-gray-500 hover:text-gray-300">
+                        <span class="material-symbols-outlined text-[18px]">notifications</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+        <div class="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-2 scroll-smooth relative z-10">
+            <div class="flex items-center justify-center my-6 opacity-60">
+                <span class="px-3 text-[10px] font-mono text-gray-500">Today, October 24</span>
+            </div>
+            <div class="flex gap-4 group hover:bg-white/[0.02] p-2 -mx-2 rounded-lg transition-colors">
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-8 shrink-0 mt-0.5"
+                    data-alt="Avatar of user pixel_knight"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAWSQLHN97vK-0BHWWlQHpSpTDHwwjBBUY6G9qd7QGBetxo4Hyn2FoR0_uzC4zl8G4gvskoRpSQ1E-Ya6Qgd-WNjakh8t533A35-oik7mmiHd29rKmMxrP0HNU5hbo-arADsWj12HH0oERfxWxkcUeomh2ZoAhNfgGBQzN2U8ve1YSdtNC_qWY-mAfCnpVqAyLuhGhvRsPNlPRPI2byIo-vKBwO3dj-8FJ7Kc0JVudM0VGP_CwcZsLLICYLpTLwvUQyqeG-y1b3WjPr");'>
+                </div>
+                <div class="flex flex-1 flex-col items-start gap-1 max-w-4xl">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-gray-200 font-medium text-sm">pixel_knight</span>
+                        <span class="text-gray-600 text-[11px] font-mono">10:42 AM</span>
+                    </div>
+                    <div class="text-gray-300 text-[14px] leading-relaxed">
+                        Has anyone tried the new <span
+                            class="bg-primary/10 text-primary px-1 py-0.5 rounded text-xs font-mono border border-primary/20">/v2/auth</span>
+                        endpoint? I'm getting some weird 404s on the route when passing the bearer token.
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 group hover:bg-white/[0.02] p-2 -mx-2 rounded-lg transition-colors">
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-8 shrink-0 mt-0.5"
+                    data-alt="Avatar of user dev_alpha"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAF_-tceSXkD8vwRE0g2aV57mi__gGN5F1eGFn8thgAFGMw1YpDp5ak-nrRAlp4_51Hwx4zH4g8VbZnCzvEY8vg4tI-QaMw9bSJiEXdD5t8drOk-Fk12CUAaoA0eIsUCigBNOfdUOkMBCA_N0Oi_KrVc2e74JM-fC0gWBhN6y1Io8_V8l_pEyso4zbUfp_5pfPEeN_t_RlryfaRNnzNOMgxoCO0L3F0NGN_zNaFoZgt9ZYpa3N9zDVw6BWURZbZ3Ly_WVZsgsFtxgUj");'>
+                </div>
+                <div class="flex flex-1 flex-col items-start gap-2 max-w-4xl">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-primary font-medium text-sm">dev_alpha</span>
+                        <span class="text-gray-600 text-[11px] font-mono">10:43 AM</span>
+                    </div>
+                    <div class="text-gray-300 text-[14px] leading-relaxed">
+                        Yeah, I ran into that too. You need to include the tenant ID in the header now, it's not
+                        optional anymore. Here is the snippet I used to fix it:
+                    </div>
+                    <div
+                        class="w-full max-w-[580px] bg-code-bg border border-border-subtle rounded-md overflow-hidden mt-1 shadow-lg">
+                        <div
+                            class="flex items-center justify-between px-3 py-1.5 bg-black/20 border-b border-border-subtle">
+                            <span class="text-[11px] font-mono text-gray-500">auth_helper.py</span>
+                            <button
+                                class="flex items-center gap-1.5 text-[10px] font-medium text-gray-500 hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-[12px]">content_copy</span>
+                                Copy
+                            </button>
+                        </div>
+                        <div class="p-3 overflow-x-auto">
+                            <pre
+                                class="font-mono text-[13px] leading-6"><span class="text-pink-400">import</span> <span class="text-gray-100">requests</span>
+<span class="text-pink-400">def</span> <span class="text-purple-400">authenticate_user</span><span class="text-gray-100">(tenant_id):</span>
+    <span class="text-slate-500"># Add tenant ID to headers</span>
+    <span class="text-gray-100">headers = {</span>
+        <span class="text-blue-300">'X-Tenant-ID'</span><span class="text-gray-100">: tenant_id,</span>
+        <span class="text-blue-300">'Authorization'</span><span class="text-gray-100">: </span><span class="text-blue-300">'Bearer ...'</span>
+    <span class="text-gray-100">}</span>
+    <span class="text-pink-400">return</span> <span class="text-gray-100">requests.get(url, headers=headers)</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 group hover:bg-white/[0.02] p-2 -mx-2 rounded-lg transition-colors">
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-8 shrink-0 mt-0.5 opacity-90"
+                    data-alt="My user avatar"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBYXTOqQdsHDfdDzQxvQivlDhs7geKLHZwGURPAggkzN-hFbxUTGFIbktCRdNpd3DkPWhIslq64QuHEB9fa82Vo8JUYWB8NSy3-ldXd8QUx2XwYa8jGNzhgoO859hg9vvmCxvoX7pH55rOiG-aOSyIQDL8kUVp_iGFvrZHWIl1w3A7V5WHjT7WjqTOD6IyLIbojcSLiDQyX0GGp6FibO9j5M9Egj4_jSEYe8qnAU_8Ycq89s4MaeuAFWAYepBEBPKmQOvMayDfrwO_y");'>
+                </div>
+                <div class="flex flex-1 flex-col items-start gap-1 max-w-4xl">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-gray-200 font-medium text-sm">Me</span>
+                        <span class="text-gray-600 text-[11px] font-mono">10:45 AM</span>
+                    </div>
+                    <div class="text-gray-300 text-[14px] leading-relaxed">
+                        Ah, that makes sense. I missed the memo on the tenant ID update. Thanks for the quick fix!
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 opacity-0 animate-[fadeIn_0.5s_ease-in_forwards] pl-2">
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-6 shrink-0 mt-1 opacity-40 grayscale"
+                    data-alt="Avatar of user typing"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCJuz1LGVfQbAhDhSODAyN2VI6TkVCG9A1FvbviWUHIq1jYtc22Nf-Fi7bmR1NwkzIBP0MpPqFDobw9nkd8XLxpekp550jB05KpuX-IrBhekWZYhP8NdiAWLPnO9J1WMBccE0e9lsWWaBYGFNplzFD6bJPQ1iVs8DwScaBPvpczjvW9seEalWfRZvy6f64sMWge6moLBJFexcNErJxvXTZYEml1PWZ4W1GCZUqoHaRb2O_yLUljkIJBV86bNbeTsOPJBIEX3wnSXf18");'>
+                </div>
+                <div class="flex items-center gap-1 h-6">
+                    <div class="w-1 h-1 bg-gray-500 rounded-full animate-bounce"></div>
+                    <div class="w-1 h-1 bg-gray-500 rounded-full animate-bounce delay-75"></div>
+                    <div class="w-1 h-1 bg-gray-500 rounded-full animate-bounce delay-150"></div>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 pt-2 shrink-0 z-20">
+            <div
+                class="glass-panel rounded-xl shadow-2xl relative overflow-hidden group focus-within:ring-1 focus-within:ring-primary/30 transition-all">
+                <div class="flex items-center gap-1 px-3 py-2 border-b border-border-subtle bg-black/20">
+                    <button class="markdown-btn font-bold" title="Bold">B</button>
+                    <button class="markdown-btn italic" title="Italic">I</button>
+                    <button class="markdown-btn" title="Code">&lt;/&gt;</button>
+                    <button class="markdown-btn" title="Link">
+                        <span class="material-symbols-outlined text-[14px] align-middle">link</span>
+                    </button>
+                    <div class="h-3 w-px bg-border-subtle mx-1"></div>
+                    <button class="markdown-btn" title="Heading 1">H1</button>
+                    <button class="markdown-btn" title="List">
+                        <span class="material-symbols-outlined text-[14px] align-middle">format_list_bulleted</span>
+                    </button>
+                </div>
+                <textarea
+                    class="w-full bg-transparent border-none text-gray-200 placeholder-gray-600 focus:ring-0 resize-none h-[60px] py-3 px-4 font-sans text-sm leading-relaxed"
+                    placeholder="Type a message to #global-dev..." rows="1"></textarea>
+                <div class="flex justify-between items-center px-3 pb-2">
+                    <div class="flex items-center gap-1">
+                        <button class="p-1.5 text-gray-500 hover:text-primary rounded transition-colors"
+                            title="Add Attachment">
+                            <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                        </button>
+                        <button class="p-1.5 text-gray-500 hover:text-primary rounded transition-colors" title="Emoji">
+                            <span class="material-symbols-outlined text-[18px]">sentiment_satisfied</span>
+                        </button>
+                        <button class="p-1.5 text-gray-500 hover:text-primary rounded transition-colors"
+                            title="Mention">
+                            <span class="material-symbols-outlined text-[18px]">alternate_email</span>
+                        </button>
+                    </div>
+                    <button
+                        class="flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 hover:border-primary/50 text-xs font-semibold px-4 py-1.5 rounded-md transition-all shadow-glow-sm">
+                        <span>Send</span>
+                        <span class="material-symbols-outlined text-[14px]">send</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex justify-end mt-2 px-1">
+                <p class="text-[10px] text-gray-600">
+                    <span class="font-mono text-gray-500">⏎</span> send <span class="mx-1">·</span> <span
+                        class="font-mono text-gray-500">⇧ ⏎</span> newline
+                </p>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
